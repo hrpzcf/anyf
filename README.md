@@ -30,7 +30,7 @@ linux平台编译方法：
 3. 在fpack项目目录打开命令窗口；
 4. 输入命令：`cmake -DCMAKE_BUILD_TYPE:STRING=Release -B./build -G "Unix Makefiles"`;
 5. 输入命令：`cmake --build ./build`；
-6. 等待编译完成，生成的可执行文件在`anyf/binfile`目录下，名为`anyf`。
+6. 等待编译完成，生成的可执行文件在`anyf/binary`目录下，名为`anyf`。
 
 <br>
 
@@ -41,7 +41,7 @@ Windows平台编译方法：
   3. 在fpack项目目录打开命令窗口；
   4. 输入命令：`cmake -DCMAKE_BUILD_TYPE:STRING=Release -B./build -G "MinGW Makefiles"`;
   5. 输入命令：`cmake --build ./build`；
-  6. 等待编译完成，生成的可执行文件在`anyf/binfile`目录下，名为`anyf.exe`。
+  6. 等待编译完成，生成的可执行文件在`anyf/binary`目录下，名为`anyf.exe`。
 
 <br>
 
@@ -52,12 +52,12 @@ Windows平台编译方法：
     4. 使用`Visual Studio`打开解决方案文件`msbuild.sln`；
     5. 选择上方工具栏`解决方案配置`为`Release`，`x64`；
     6. 选择上方菜单栏`生成`->`生成解决方案`；
-    7. 等待编译完成，生成的可执行文件在`anyf/binfile`目录下，名为`anyf.exe`。
+    7. 等待编译完成，生成的可执行文件在`anyf/binary`目录下，名为`anyf.exe`。
 
 <br>
 
 # 使用方法
 
-1. 将 `anyf` 或 `fpakc.exe` 所在目录路径加入系统环境变量 PATH (此步可忽略，但建议加入，否则每次使用 anyf 都需要在 anyf 所在目录打开 CMD 或 打开 CMD 再 cd 至 anyf 所在目录，不方便)；
+1. 将 `anyf` 或 `anyf.exe` 所在目录路径加入系统环境变量 PATH (此步可忽略，但建议加入，否则每次使用 anyf 都需要打开 cmd 再 cd 至 anyf 所在目录，不方便)；
 2. 输入命令`anyf help`查看帮助。
-3. 如果未加入系统环境变量 PATH 中，则需在命令窗口中 cd 至 `anyf` 所在目录，运行命令 `./anyf -h`，如果你使用的是 Windows 的 CMD 终端则加 `.\` 前缀，其他命令终端加 `./` 前缀。
+3. 如果未将 anyf 所在目录加入系统环境变量，则需在命令窗口中 cd 至 `anyf` 所在目录，运行命令 `./anyf help`，如果你使用的是 Windows 的 cmd 则使用 `.\anyf help` 命令。
