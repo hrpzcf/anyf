@@ -1,0 +1,12 @@
+.vscode
+msbuild/.vs
+msbuild/x64
+msbuild/Debug
+msbuild/Release
+build/
+execfile/
+*.exe
+*.pfs
+/useage.txt
+/msbuild/*.jpeg
+/binary
