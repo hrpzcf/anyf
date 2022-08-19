@@ -18,9 +18,7 @@
 
 # 源代码编译方法
 
-源代码仓库：
-- GITEE: https://gitee.com/hrpzcf/anyf
-- GITHUB: https://github.com/hrpzcf/anyf
+源代码仓库：[GitHub](https://github.com/hrpzcf/anyf) 或 [Gitee](https://gitee.com/hrpzcf/anyf)
 
 <br>
 
