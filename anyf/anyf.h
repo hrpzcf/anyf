@@ -8,7 +8,7 @@
 
 #include "../ospath/ospath.h"
 
-#define ANYF_VER "0.1.6"
+#define ANYF_VER "0.1.7"
 
 #define FILE_MAX      LLONG_MAX     // 文件最大字节数
 #define PMS           PATH_MAX_SIZE // 路径最大字节数
