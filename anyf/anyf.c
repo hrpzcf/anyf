@@ -357,9 +357,9 @@ ANYF_T *AnyfPack(const char *ToBePacked, bool Recursion, ANYF_T *AnyfType, bool 
     strcpy(AbsPathBuffer1, AnyfType->path);
     if (!OsPathNormpath(OsPathNormcase(AbsPathBuffer1), PATH_MAX_SIZE)) {
         WHETHER_CLOSE_REMOVE(AnyfType);
-        PRINT_ERROR_AND_ABORT("获取路径标准形式失败");
+        PRINT_ERROR_AND_ABORT("获取标准形式路径失败");
     }
-    // 初始缓冲区大小L_BUF_SIZE字节
+    // 初始缓冲区大小 BUF_SIZE_L 字节
     if (BufferRW = malloc(sizeof(BUFFER_T) + BUF_SIZE_L)) {
         BufferRW->size = BUF_SIZE_L;
     } else {
@@ -367,7 +367,7 @@ ANYF_T *AnyfPack(const char *ToBePacked, bool Recursion, ANYF_T *AnyfType, bool 
         PRINT_ERROR_AND_ABORT("为文件读写缓冲区分配初始内存失败");
     }
     if (OsPathIsFile(ToBePacked)) {
-        printf(MESSAGE_INFO "写入：%s\n", ToBePacked);
+        printf(MESSAGE_INFO "打包：%s\n", ToBePacked);
         if (OsPathAbsolutePath(AbsPathBuffer2, PATH_MAX_SIZE, ToBePacked)) {
             WHETHER_CLOSE_REMOVE(AnyfType);
             PRINT_ERROR_AND_ABORT("获取子文件绝对路径失败");
@@ -473,7 +473,7 @@ ANYF_T *AnyfPack(const char *ToBePacked, bool Recursion, ANYF_T *AnyfType, bool 
             PRINT_ERROR_AND_ABORT("扩充子文件信息表容量失败");
         }
         for (size_t i = 0; i < PathScanner->count; ++i) {
-            printf(MESSAGE_INFO "写入：%s\n", PathScanner->paths[i]);
+            printf(MESSAGE_INFO "打包：%s\n", PathScanner->paths[i]);
             if (OsPathIsDirectory(PathScanner->paths[i])) {
                 InfoTemp.fsize = DIR_SIZE; // 目录大小定义为DIR_SIZE
                 if (OsPathRelativePath(InfoTemp.fname, PATH_MAX_SIZE, PathScanner->paths[i], ParentDIR)) {
@@ -638,7 +638,7 @@ ANYF_T *AnyfInfo(const char *AnyfPath) {
     // 打开MSVC编译器printf的%n占位符支持
     _set_printf_count_output(1);
 #endif // _MSC_VER
-    printf("\n格式版本：");
+    printf("\n[ANYF]文件格式版本：");
     printf("%hd.%hd.%hd.%hd\t", Spec[0], Spec[1], Spec[2], Spec[3]);
     printf("包含条目总数：");
     printf("%" I64_SPECIFIER "\n\n", AnyfType->head.count);
@@ -657,7 +657,7 @@ ANYF_T *AnyfInfo(const char *AnyfPath) {
     for (Index = 0; Index < AnyfType->head.count; ++Index) {
         printf("%19" I64_SPECIFIER "\t%s\t%s\n", AnyfType->sheet[Index].fsize, AnyfType->sheet[Index].fsize < 0 ? "目录" : "文件", AnyfType->sheet[Index].fname);
     }
-    printf("\n格式版本：");
+    printf("\n[ANYF]文件格式版本：");
     printf("%hd.%hd.%hd.%hd\t", Spec[0], Spec[1], Spec[2], Spec[3]);
     printf("包含条目总数：");
     printf("%" I64_SPECIFIER "\n\n", AnyfType->head.count);
