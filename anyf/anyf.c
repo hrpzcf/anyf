@@ -642,7 +642,7 @@ ANYF_T *AnyfInfo(const char *AnyfPath) {
     printf("%hd.%hd.%hd.%hd\t", Spec[0], Spec[1], Spec[2], Spec[3]);
     printf("包含条目总数：");
     printf("%" I64_SPECIFIER "\n\n", AnyfType->head.count);
-    printf("%19s%n\t%4s%n\t%s%n\n", "大小", &A, "类型", &B, "路径和文件名", &C);
+    printf("%19s%n\t%4s%n\t%s%n\n", "大小", &A, "类型", &B, "文件名", &C);
     if (NameLenMax < (size_t)C - B - 1)
         NameLenMax = (size_t)C - B - 1;
     else if (NameLenMax >= EQUAL_MAX)
