@@ -351,7 +351,7 @@ ANYF_T *AnyfPack(const char *ToBePacked, bool Recursion, ANYF_T *AnyfType, bool 
         exit(EXIT_CODE_FAILURE);
     }
     if (AnyfType->head.count > 0LL && !Append) {
-        printf(MESSAGE_WARN "此[anyf]文件已包含%" I64_SPECIFIER "个子文件，但此次未指定增量打包\n", AnyfType->head.count);
+        printf(MESSAGE_WARN "此[anyf]文件已包含%" I64_SPECIFIER "个子文件，但未指定追加打包\n", AnyfType->head.count);
         exit(EXIT_CODE_FAILURE);
     }
     strcpy(AbsPathBuffer1, AnyfType->path);

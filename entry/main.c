@@ -91,10 +91,14 @@ int ParseCommands(int argc, char **argvs) {
             fprintf(stderr, MESSAGE_ERROR "没有输入要打包的目标路径，此路径应使用[-t]选项指定\n");
             return EXIT_CODE_FAILURE;
         }
-        if (OsPathExists(AnyfFilePath))
+        // 指定了 -a 选项且 [anyf] 文件存在，则 -o 选项不生效
+        if (OsPathExists(AnyfFilePath) && Append) {
             pAnyfType = AnyfOpen(AnyfFilePath);
-        else
+        } else {
+            // 指定了 -a 选项但 [anyf] 文件不存在，则 -a / -o 选项无意义
+            // 未指定 -a 选项但 [anyf] 文件存在，则指定 -o 选项将覆盖文件
             pAnyfType = AnyfMake(AnyfFilePath, Overwrite);
+        }
         AnyfPack(TargetPath, Recursion, pAnyfType, Append);
         AnyfClose(pAnyfType);
         return EXIT_CODE_SUCCESS;
@@ -217,8 +221,9 @@ int ParseCommands(int argc, char **argvs) {
             fprintf(stderr, MESSAGE_ERROR "没有输入[JPEG]文件路径，此路径应使用[-j]选项指定\n");
             return EXIT_CODE_FAILURE;
         }
-        if (OsPathExists(AnyfFilePath)) {
-            printf(MESSAGE_WARN "已存在[anyf]文件，[-j]及[-o]选项将不生效。\n");
+        // 选项 -a 和 -o 同时出现的处理办法见 MAINCMD_PACK 命令的注释
+        if (OsPathExists(AnyfFilePath) && Append) {
+            printf(MESSAGE_WARN "已存在[anyf]文件，[-j]选项将不生效。\n");
             pAnyfType = AnyfOpenFakeJPEG(AnyfFilePath);
         } else {
             pAnyfType = AnyfMakeFakeJPEG(AnyfFilePath, JPEGFilePath, Overwrite);
