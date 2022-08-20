@@ -10,8 +10,8 @@
 
 #define ANYF_VER "0.1.3"
 
-#define FILE_MAX      LLONG_MAX  // 文件最大字节数
-#define PM            PATH_MSIZE // 路径最大字节数
+#define FILE_MAX      LLONG_MAX     // 文件最大字节数
+#define PMS           PATH_MAX_SIZE // 路径最大字节数
 #define MESSAGE_INFO  "\33[32m[信息]\33[0m "
 #define MESSAGE_WARN  "\33[33m[警告]\33[0m "
 #define MESSAGE_ERROR "\33[31m[错误]\33[0m "
@@ -44,9 +44,9 @@ int StringUTF8ToANSI(char buf[], int bfsize, char *utf8STR);
 #define EXIT_CODE_SUCCESS 0 // 成功退出状态码
 #define EXIT_CODE_FAILURE 1 // 失败退出状态码
 
-#define ID_N 16  // head的id字段数组大小
-#define SP_N 4   // head的sp字段数组大小
-#define EM_N 256 // head的emt字段数组大小
+#define ID_COUNT  16  // HEAD_T 的 id 数组元素个数
+#define STD_COUNT 4   // HEAD_T 的 std 数组元素个数
+#define EMT_COUNT 256 // HEAD_T 的 emt 数组元素个数
 
 // 文件读写缓冲区
 typedef struct {
@@ -54,38 +54,41 @@ typedef struct {
     char fdata[];
 } BUFFER_T;
 
-#define L_BUF_SIZE 8388608LL   // 文件读写缓冲区大小下限
-#define U_BUF_SIZE 134217728LL // 文件读写缓冲区大小上限
-#define DIR_SIZE   -1          // 定义目录本身大小为-1
-#define EQS_MAX    512         // 显示子文件信息表时分隔符缓冲区大小
+#define BUF_SIZE_L 8388608LL   // 文件读写缓冲区大小下限
+#define BUF_SIZE_U 134217728LL // 文件读写缓冲区大小上限
+#define DIR_SIZE   -1          // 定义：目录本身大小为 -1
+#define EQUAL_MAX  512         // 显示子文件信息时分隔符(等号)缓冲区大小
 
-#define JPEG_SIG     0xFF // JPEG字段标记码
-#define JPEG_START   0xD8 // JPEG图像起始
-#define JPEG_END     0xD9 // JPEG图像结束
-#define JPEG_INVALID 0    // 无效的JPEG图像
-#define JPEG_ERROR   -1   // 检查JPEG图像过程中出现了错误
+#define JPEG_SIG   0xFF // 此字节表示其后一个字节是 JPEG 标记码
+#define JPEG_START 0xD8 // 跟在 JPEG_SIG 后，表示 JPEG 图像起始
+#define JPEG_END   0xD9 // 跟在 JPEG_SIG 后，表示 JPEG 图像结束
+
+#define JPEG_INVALID 0  // 无效的 JPEG 图像
+#define JPEG_ERROR   -1 // 检查 JPEG 图像过程中出现了错误
 
 // 文件头信息集合
 // 注意结构体成员的内存对齐
 // 因为要把结构体直接写入到文件或从文件直接读取
 #pragma pack(16)
 typedef struct {
-    char id[ID_N];    // 文件标识符
-    char emt[EM_N];   // 预留空字节
-    int16_t sp[SP_N]; // 文件规范版本
-    int64_t count;    // 包含文件总数
-} HEAD_T;             // 文件头信息结构体
+    char id[ID_COUNT];      // 文件标识符
+    char emt[EMT_COUNT];    // 预留空字节
+    int16_t std[STD_COUNT]; // 文件规范版本
+    int64_t count;          // 包含文件总数
+} HEAD_T;                   // 文件头信息结构体
 #pragma pack()
 
 // 子文件信息，包括文件大小,文件名长度,文件名
 // 注意结构体成员的内存对齐
 // 因为要把结构体直接写入到文件或从文件直接读取
+// 写入[anyf]文件时从 fsize 开始写，offset 不写入文件
+// 子文件信息：<fsize、fnlen、fname、子文件字节码>为一个子文件信息
 #pragma pack(2)
 typedef struct {
-    int64_t offset; // 数据偏移量
-    int64_t fsize;  // 数据块大小
-    int16_t fnlen;  // 文件名长度
-    char fname[PM]; // 文件名字符串
+    int64_t offset;  // 子文件信息在[anyf]中的偏移量
+    int64_t fsize;   // 子文件数据内容的字节数大小
+    int16_t fnlen;   // 子文件的文件名长度
+    char fname[PMS]; // 子文件的文件名字符串，UTF8编码
 } INFO_T;
 #pragma pack()
 
@@ -99,19 +102,31 @@ typedef struct {
     FILE *handle;  // 打开的二进制流
 } ANYF_T;
 
-// 默认[anyf]文件头信息结构体
+// 默认[anyf]文件头信息，可修改 id 内容以自定义文件标识
 static const HEAD_T DEFAULT_HEAD = {
+    // 格式标识："\377Anyf Momo\0"等16字节，余下为零
+    .id =
+        {
+            0xff,
+            0x41, // 'A'
+            0x6e, // 'n'
+            0x79, // 'y'
+            0x66, // 'f'
+            0x20, // ' '
+            0x4d, // 'M'
+            0x6f, // 'o'
+            0x4d, // 'M'
+            0x6f, // 'o'
+        },
     // 分别为：2位年份，主版本，次版本，修订版本
-    .sp = {22, 1, 0, 6},
-    // 预留的空字节用于可能增加的信息字段
+    .std = {22, 1, 0, 6},
+    // 预留的 256 个字节用于可能增加的信息
     .emt = {0},
     // [anyf]文件中包含的子文件总数，初始总数总是设置为零
     .count = 0LL,
-    // 格式标识："\377Anyf Momo\0"等16字节，余下字节为零
-    .id = {0xFF, 0x41, 0x6e, 0x79, 0x66, 0x20, 0x4d, 0x6f, 0x4d, 0x6f},
 };
 
-// 出错时打印调试信息及退出程序
+// 出错时打印调试信息并退出程序
 #define PRINT_ERROR_AND_ABORT(STR) \
     fprintf(stderr, MESSAGE_ERROR STR ": 源码 %s 第 %d 行，版本 %s\n", OsPathBaseName(NULL, 0ULL, __FILE__), __LINE__, ANYF_VER); \
     exit(EXIT_CODE_FAILURE)
@@ -122,21 +137,21 @@ static const HEAD_T DEFAULT_HEAD = {
         fclose(ANYFTYPE->handle), remove(ANYFTYPE->path); \
     }
 
-#define FS_S (sizeof(int64_t))        // bom的fsize字段大小
-#define NL_S (sizeof(int16_t))        // bom的fnlen字段大小
-#define ID_S (ID_N * sizeof(char))    // head的id字段大小
-#define SP_S (SP_N * sizeof(int16_t)) // head的sp字段大小
-#define EM_S (EM_N * sizeof(char))    // head的emt字段大小
-#define FC_S (sizeof(int64_t))        // head的count字段大小
+#define FSIZE_SIZE (sizeof(int64_t))             // INFO_T 的 fsize 成员大小
+#define FNLEN_SIZE (sizeof(int16_t))             // INFO_T 的 fnlen 成员大小
+#define ID_SIZE    (ID_COUNT * sizeof(char))     // HEAD_T 的 id 成员大小
+#define STD_SIZE   (STD_COUNT * sizeof(int16_t)) // HEAD_T 的 std 成员大小
+#define EMT_SIZE   (EMT_COUNT * sizeof(char))    // HEAD_T 的 emt 成员大小
+#define COUNT_SIZE (sizeof(int64_t))             // HEAD_T 的 count 成员大小
 
-#define FCNT_O (ID_S + SP_S + EM_S)        // fcount字段在[anyf]文件中的偏移量
-#define DATA_O (ID_S + SP_S + EM_S + FC_S) // 数据块起始偏移量
-#define FSNL_S (FS_S + NL_S)               // 结构体finfo_t中fsize和fnlen的类型大小之和
+#define COUNT_OFFSET     (ID_SIZE + STD_SIZE + EMT_SIZE)              // HEAD_T 中的 count 在[anyf]文件中的偏移量
+#define SUBDATA_OFFSET   (ID_SIZE + STD_SIZE + EMT_SIZE + COUNT_SIZE) // [anyf]文件中首个子文件信息(见前面注释)起始偏移量
+#define FSIZE_FNLEN_SIZE (FSIZE_SIZE + FNLEN_SIZE)                    // INFO_T 中 fsize 和 fnlen 两个成员的大小之和
 
 ANYF_T *AnyfMake(const char *AnyfPath, bool Overwrite);
 ANYF_T *AnyfOpen(const char *AnyfPath);
 void AnyfClose(ANYF_T *AnyfType);
-ANYF_T *AnyfPack(const char *ToPack, bool Recursion, ANYF_T *AnyfType, bool Append);
+ANYF_T *AnyfPack(const char *ToBePacked, bool Recursion, ANYF_T *AnyfType, bool Append);
 ANYF_T *AnyfExtract(const char *ToExtract, const char *Destination, int Overwrite, ANYF_T *AnyfType);
 ANYF_T *AnyfInfo(const char *AnyfPath);
 bool AnyfIsFakeJPEG(const char *FakeJPEGPath);

@@ -37,8 +37,8 @@
 #define PATH_ESEP  '.'  // 代表扩展名分隔符的字符
 #define PATH_ESEPS "."  // 代表扩展名分隔符的字符串
 
-#define EMPTY_CHAR 0    // 空字符
-#define PATH_MSIZE 4096 // 允许处理的最大路径字节数
+#define EMPTY_CHAR    0    // 空字符
+#define PATH_MAX_SIZE 4096 // 允许处理的最大路径字节数
 
 #ifdef _WIN32
 #define PATH_NSEP   '\\'   // 代表普通路径分隔符的字符

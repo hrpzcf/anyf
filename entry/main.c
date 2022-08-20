@@ -18,11 +18,11 @@ int ParseCommands(int argc, char **argvs) {
     bool Recursion = false;
     int SubOption;
     ANYF_T *pAnyfType; // [anyf]文件信息结构体指针
-    static char AnyfFilePath[PATH_MSIZE];
-    static char TargetPath[PATH_MSIZE];
-    static char JPEGFilePath[PATH_MSIZE];
-    static char Executable[PATH_MSIZE];
-    static char NameToExtract[PATH_MSIZE];
+    static char AnyfFilePath[PATH_MAX_SIZE];
+    static char TargetPath[PATH_MAX_SIZE];
+    static char JPEGFilePath[PATH_MAX_SIZE];
+    static char Executable[PATH_MAX_SIZE];
+    static char NameToExtract[PATH_MAX_SIZE];
     const char *pNameToExtract = NameToExtract;
     // 主命令，必须是第一个命令行参数
     const char *MAINCMD_HELP = "help"; // 显示此程序的帮助信息
@@ -45,7 +45,7 @@ int ParseCommands(int argc, char **argvs) {
     TargetPath[0] = EMPTY_CHAR;
     JPEGFilePath[0] = EMPTY_CHAR;
     optind = 2; // 查找参数从第3个开始，否则查不到（此变量是 getopt.h 全局变量）
-    OsPathSplitExt(Executable, PATH_MSIZE, NULL, 0, OsPathBaseName(NULL, 0, argvs[0]), '.');
+    OsPathSplitExt(Executable, PATH_MAX_SIZE, NULL, 0, OsPathBaseName(NULL, 0, argvs[0]), '.');
     if (!strcmp(argvs[1], MAINCMD_HELP)) {
         printf(COMMANDUSAGE, Executable);
         return EXIT_CODE_SUCCESS;
@@ -56,14 +56,14 @@ int ParseCommands(int argc, char **argvs) {
         while ((SubOption = getopt(argc, argvs, SUBCMD_PACK)) != -1) {
             switch (SubOption) {
             case 'f':
-                if (strlen(optarg) >= PATH_MSIZE) {
+                if (strlen(optarg) >= PATH_MAX_SIZE) {
                     fprintf(stderr, MESSAGE_ERROR "路径太长：%s\n", optarg);
                     return EXIT_CODE_FAILURE;
                 }
                 strcpy(AnyfFilePath, optarg);
                 break;
             case 't':
-                if (strlen(optarg) >= PATH_MSIZE) {
+                if (strlen(optarg) >= PATH_MAX_SIZE) {
                     fprintf(stderr, MESSAGE_ERROR "路径太长：%s\n", optarg);
                     return EXIT_CODE_FAILURE;
                 }
@@ -102,21 +102,21 @@ int ParseCommands(int argc, char **argvs) {
         while ((SubOption = getopt(argc, argvs, SUBCMD_EXTR)) != -1) {
             switch (SubOption) {
             case 'n':
-                if (strlen(optarg) >= PATH_MSIZE) {
+                if (strlen(optarg) >= PATH_MAX_SIZE) {
                     fprintf(stderr, MESSAGE_ERROR "输入的文件名过长\n");
                     return EXIT_CODE_FAILURE;
                 }
                 strcpy(NameToExtract, optarg);
                 break;
             case 'f':
-                if (strlen(optarg) >= PATH_MSIZE) {
+                if (strlen(optarg) >= PATH_MAX_SIZE) {
                     fprintf(stderr, MESSAGE_ERROR "路径太长：%s\n", optarg);
                     return EXIT_CODE_FAILURE;
                 }
                 strcpy(AnyfFilePath, optarg);
                 break;
             case 't':
-                if (strlen(optarg) >= PATH_MSIZE) {
+                if (strlen(optarg) >= PATH_MAX_SIZE) {
                     fprintf(stderr, MESSAGE_ERROR "路径太长：%s\n", optarg);
                     return EXIT_CODE_FAILURE;
                 }
@@ -149,7 +149,7 @@ int ParseCommands(int argc, char **argvs) {
         while ((SubOption = getopt(argc, argvs, SUBCMD_INFO)) != -1) {
             switch (SubOption) {
             case 'f':
-                if (strlen(optarg) >= PATH_MSIZE) {
+                if (strlen(optarg) >= PATH_MAX_SIZE) {
                     fprintf(stderr, MESSAGE_ERROR "路径太长：%s\n", optarg);
                     return EXIT_CODE_FAILURE;
                 }
@@ -171,14 +171,14 @@ int ParseCommands(int argc, char **argvs) {
         while ((SubOption = getopt(argc, argvs, SUBCMD_FAKE)) != -1) {
             switch (SubOption) {
             case 'f':
-                if (strlen(optarg) >= PATH_MSIZE) {
+                if (strlen(optarg) >= PATH_MAX_SIZE) {
                     fprintf(stderr, MESSAGE_ERROR "路径太长：%s\n", optarg);
                     return EXIT_CODE_FAILURE;
                 }
                 strcpy(AnyfFilePath, optarg);
                 break;
             case 't':
-                if (strlen(optarg) >= PATH_MSIZE) {
+                if (strlen(optarg) >= PATH_MAX_SIZE) {
                     fprintf(stderr, MESSAGE_ERROR "路径太长：%s\n", optarg);
                     return EXIT_CODE_FAILURE;
                 }
@@ -194,7 +194,7 @@ int ParseCommands(int argc, char **argvs) {
                 Overwrite = true;
                 break;
             case 'j':
-                if (strlen(optarg) >= PATH_MSIZE) {
+                if (strlen(optarg) >= PATH_MAX_SIZE) {
                     fprintf(stderr, MESSAGE_ERROR "路径太长：%s\n", optarg);
                     return EXIT_CODE_FAILURE;
                 }

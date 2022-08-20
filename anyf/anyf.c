@@ -50,10 +50,10 @@ static bool ExpandBUF(BUFFER_T **ppBuffer, int64_t Size) {
 // 大文件复制，从子文件流复制到[anyf]文件流
 static bool SubCopyToMain(FILE *SubStream, FILE *AnyfFileStream, BUFFER_T **BufferRW) {
     size_t SizeRead; // 每次fread的大小
-    if (!ExpandBUF(BufferRW, U_BUF_SIZE))
+    if (!ExpandBUF(BufferRW, BUF_SIZE_U))
         return false;
     while (!feof(SubStream)) {
-        SizeRead = fread((*BufferRW)->fdata, 1, U_BUF_SIZE, SubStream);
+        SizeRead = fread((*BufferRW)->fdata, 1, BUF_SIZE_U, SubStream);
         if (SizeRead == 0ULL) {
             return true;
         } else if (SizeRead < 0ULL)
@@ -66,16 +66,16 @@ static bool SubCopyToMain(FILE *SubStream, FILE *AnyfFileStream, BUFFER_T **Buff
 
 // 大文件复制，从[anyf]文件流复制到提取子文件时新建的子文件流
 static bool MainCopyToSub(FILE *AnyfFileStream, int64_t Offset, int64_t SizeToRead, FILE *SubStream, BUFFER_T **BufferRW) {
-    if (!ExpandBUF(BufferRW, U_BUF_SIZE))
+    if (!ExpandBUF(BufferRW, BUF_SIZE_U))
         return false;
     if (AnyfSeek(AnyfFileStream, Offset, SEEK_SET))
         return false;
-    while (SizeToRead >= U_BUF_SIZE) {
-        if (fread((*BufferRW)->fdata, U_BUF_SIZE, 1, AnyfFileStream) != 1)
+    while (SizeToRead >= BUF_SIZE_U) {
+        if (fread((*BufferRW)->fdata, BUF_SIZE_U, 1, AnyfFileStream) != 1)
             return false;
-        if (fwrite((*BufferRW)->fdata, U_BUF_SIZE, 1, SubStream) != 1)
+        if (fwrite((*BufferRW)->fdata, BUF_SIZE_U, 1, SubStream) != 1)
             return false;
-        if ((SizeToRead -= U_BUF_SIZE) < U_BUF_SIZE) {
+        if ((SizeToRead -= BUF_SIZE_U) < BUF_SIZE_U) {
             if (SizeToRead > 0LL) {
                 if (fread((*BufferRW)->fdata, SizeToRead, 1, AnyfFileStream) != 1)
                     return false;
@@ -116,9 +116,9 @@ bool AnyfIsFakeJPEG(const char *FakeJPEGPath) {
     BUFFER_T *BufferRW;
     int64_t FakeJPEGSize, JPEGNetSize;
     HEAD_T HeadTemp;
-    static char PathBuffer[PATH_MSIZE];
+    static char PathBuffer[PATH_MAX_SIZE];
     bool FinalReturnCode = false;
-    if (OsPathAbsolutePath(PathBuffer, PATH_MSIZE, FakeJPEGPath))
+    if (OsPathAbsolutePath(PathBuffer, PATH_MAX_SIZE, FakeJPEGPath))
         return FinalReturnCode;
     FakeJPEGHandle = fopen(PathBuffer, "rb");
     if (!FakeJPEGHandle)
@@ -166,11 +166,11 @@ void AnyfClose(ANYF_T *AnyfType) {
 
 // 创建新[anyf]文件
 ANYF_T *AnyfMake(const char *AnyfPath, bool Overwrite) {
-    FILE *AnyfHandle;            // [anyf]二进制文件流指针
-    ANYF_T *AnyfType;            // [anyf]文件信息结构体
-    char PathBuffer[PATH_MSIZE]; // 绝对路径及父目录缓冲
-    char *AnyfPathCopied;        // 拷贝路径用于结构体
-    if (OsPathAbsolutePath(PathBuffer, PATH_MSIZE, AnyfPath)) {
+    ANYF_T *AnyfType;               // [anyf]文件信息结构体
+    FILE *AnyfHandle;               // [anyf]二进制文件流指针
+    char PathBuffer[PATH_MAX_SIZE]; // 绝对路径及父目录缓冲
+    char *AnyfPathCopied;           // 拷贝路径用于结构体
+    if (OsPathAbsolutePath(PathBuffer, PATH_MAX_SIZE, AnyfPath)) {
         printf(MESSAGE_ERROR "无法获取[anyf]文件绝对路径：%s\n", AnyfPath);
         exit(EXIT_CODE_FAILURE);
     }
@@ -195,7 +195,7 @@ ANYF_T *AnyfMake(const char *AnyfPath, bool Overwrite) {
         printf(MESSAGE_ERROR "无法检查此路径是否存在\n");
         exit(EXIT_CODE_FAILURE);
     }
-    if (!OsPathDirName(PathBuffer, PATH_MSIZE, PathBuffer)) {
+    if (!OsPathDirName(PathBuffer, PATH_MAX_SIZE, PathBuffer)) {
         printf(MESSAGE_ERROR "获取[anyf]文件的父目录路径失败\n");
         exit(EXIT_CODE_FAILURE);
     }
@@ -235,14 +235,14 @@ ANYF_T *AnyfMake(const char *AnyfPath, bool Overwrite) {
 
 // 打开已存在的[anyf]文件
 ANYF_T *AnyfOpen(const char *fp_path) {
-    ANYF_T *AnyfType;            // [anyf]文件信息结构体
-    HEAD_T HeadTemp;             // 临时[anyf]文件头
-    INFO_T *SubFileSheet;        // 子文件信息表
-    FILE *AnyfHandle;            // [anyf]文件二进制流
-    char PathBuffer[PATH_MSIZE]; // 绝对路径及父目录缓冲
-    char *AnyfPathCopied;        // 拷贝路径用于结构体
-    int64_t CellsCount = 0LL;    // 子文件信息表容量
-    if (OsPathAbsolutePath(PathBuffer, PATH_MSIZE, fp_path)) {
+    ANYF_T *AnyfType;               // [anyf]文件信息结构体
+    HEAD_T HeadTemp;                // 临时[anyf]文件头
+    INFO_T *SubFileSheet;           // 子文件信息表
+    FILE *AnyfHandle;               // [anyf]文件二进制流
+    char PathBuffer[PATH_MAX_SIZE]; // 绝对路径及父目录缓冲
+    char *AnyfPathCopied;           // 拷贝路径用于结构体
+    int64_t CellsCount = 0LL;       // 子文件信息表容量
+    if (OsPathAbsolutePath(PathBuffer, PATH_MAX_SIZE, fp_path)) {
         printf(MESSAGE_ERROR "无法获取[anyf]文件绝对路径：%s\n", fp_path);
         exit(EXIT_CODE_FAILURE);
     }
@@ -284,24 +284,24 @@ ANYF_T *AnyfOpen(const char *fp_path) {
     if (!SubFileSheet) {
         PRINT_ERROR_AND_ABORT("为子文件信息表分配内存失败");
     }
-    if (AnyfSeek(AnyfHandle, DATA_O, SEEK_SET)) {
+    if (AnyfSeek(AnyfHandle, SUBDATA_OFFSET, SEEK_SET)) {
         PRINT_ERROR_AND_ABORT("移动文件指针到数据块起始位置失败");
     }
     for (int64_t i = 0; i < HeadTemp.count; ++i) {
         if ((SubFileSheet[i].offset = AnyfTell(AnyfHandle)) < 0LL) {
-            PRINT_ERROR_AND_ABORT("获取当前字段偏移量失败");
+            PRINT_ERROR_AND_ABORT("获取当前子文件信息起始偏移量失败");
         }
-        if (fread(&SubFileSheet[i].fsize, FSNL_S, 1, AnyfHandle) != 1) {
+        if (fread(&SubFileSheet[i].fsize, FSIZE_FNLEN_SIZE, 1, AnyfHandle) != 1) {
             PRINT_ERROR_AND_ABORT("读取子文件属性失败");
         }
-        if (SubFileSheet[i].fnlen > PATH_MSIZE) {
+        if (SubFileSheet[i].fnlen > PATH_MAX_SIZE) {
             PRINT_ERROR_AND_ABORT("读取到的子文件名长度异常");
         }
         if (fread(SubFileSheet[i].fname, SubFileSheet[i].fnlen, 1, AnyfHandle) != 1) {
             PRINT_ERROR_AND_ABORT("从[anyf]文件读取子文件名失败");
         }
 #ifdef _WIN32
-        StringUTF8ToANSI(SubFileSheet[i].fname, PM, SubFileSheet[i].fname);
+        StringUTF8ToANSI(SubFileSheet[i].fname, PMS, SubFileSheet[i].fname);
 #endif // _WIN32
        // 遇到目录(大小是-1)或文件大小为0时没有数据块不需要移动文件指针
         if (SubFileSheet[i].fsize <= 0)
@@ -326,14 +326,14 @@ ANYF_T *AnyfOpen(const char *fp_path) {
 }
 
 // 将目标打包进已创建的空[anyf]文件
-ANYF_T *AnyfPack(const char *ToPack, bool Recursion, ANYF_T *AnyfType, bool Append) {
+ANYF_T *AnyfPack(const char *ToBePacked, bool Recursion, ANYF_T *AnyfType, bool Append) {
     // 如果packto是目录，则此变量用于存放其父目录
     char *ParentDIR;
     // 存放绝对路径用于比较是否同一文件
-    static char AbsPathBuffer1[PATH_MSIZE]; // [anyf]文件
-    static char AbsPathBuffer2[PATH_MSIZE]; // 子文件
+    static char AbsPathBuffer1[PATH_MAX_SIZE]; // [anyf]文件
+    static char AbsPathBuffer2[PATH_MAX_SIZE]; // 子文件
 #ifdef _WIN32
-    static char NormcasedBuffer[PATH_MSIZE]; // WIN平台比较路径是否相同需要先转全小写
+    static char NormcasedBuffer[PATH_MAX_SIZE]; // WIN平台比较路径是否相同需要先转全小写
 #endif
     // 收集路径的 scanlist 扫描器
     SCANNER_T *PathScanner;
@@ -341,13 +341,13 @@ ANYF_T *AnyfPack(const char *ToPack, bool Recursion, ANYF_T *AnyfType, bool Appe
     // 用于临时读写文件大小、文件名长度、文件名，也用于更新[anyf]文件结构体的子文件信息表
     INFO_T InfoTemp;
     BUFFER_T *BufferRW; // 文件读写缓冲区
-    if (!ToPack) {
+    if (!ToBePacked) {
         PRINT_ERROR_AND_ABORT("打包目标路径是空指针");
-    } else if (!*ToPack) {
+    } else if (!*ToBePacked) {
         PRINT_ERROR_AND_ABORT("打包目标路径是空字符串");
     }
-    if (!OsPathExists(ToPack)) {
-        printf(MESSAGE_ERROR "目标文件或目录不存在：%s\n", ToPack);
+    if (!OsPathExists(ToBePacked)) {
+        printf(MESSAGE_ERROR "目标文件或目录不存在：%s\n", ToBePacked);
         exit(EXIT_CODE_FAILURE);
     }
     if (AnyfType->head.count > 0LL && !Append) {
@@ -355,20 +355,20 @@ ANYF_T *AnyfPack(const char *ToPack, bool Recursion, ANYF_T *AnyfType, bool Appe
         exit(EXIT_CODE_FAILURE);
     }
     strcpy(AbsPathBuffer1, AnyfType->path);
-    if (!OsPathNormpath(OsPathNormcase(AbsPathBuffer1), PATH_MSIZE)) {
+    if (!OsPathNormpath(OsPathNormcase(AbsPathBuffer1), PATH_MAX_SIZE)) {
         WHETHER_CLOSE_REMOVE(AnyfType);
         PRINT_ERROR_AND_ABORT("获取路径标准形式失败");
     }
     // 初始缓冲区大小L_BUF_SIZE字节
-    if (BufferRW = malloc(sizeof(BUFFER_T) + L_BUF_SIZE)) {
-        BufferRW->size = L_BUF_SIZE;
+    if (BufferRW = malloc(sizeof(BUFFER_T) + BUF_SIZE_L)) {
+        BufferRW->size = BUF_SIZE_L;
     } else {
         WHETHER_CLOSE_REMOVE(AnyfType);
         PRINT_ERROR_AND_ABORT("为文件读写缓冲区分配初始内存失败");
     }
-    if (OsPathIsFile(ToPack)) {
-        printf(MESSAGE_INFO "写入：%s\n", ToPack);
-        if (OsPathAbsolutePath(AbsPathBuffer2, PATH_MSIZE, ToPack)) {
+    if (OsPathIsFile(ToBePacked)) {
+        printf(MESSAGE_INFO "写入：%s\n", ToBePacked);
+        if (OsPathAbsolutePath(AbsPathBuffer2, PATH_MAX_SIZE, ToBePacked)) {
             WHETHER_CLOSE_REMOVE(AnyfType);
             PRINT_ERROR_AND_ABORT("获取子文件绝对路径失败");
         }
@@ -383,19 +383,19 @@ ANYF_T *AnyfPack(const char *ToPack, bool Recursion, ANYF_T *AnyfType, bool Appe
             printf(MESSAGE_ERROR "退出：此文件是正在创建的[anyf]文件\n");
             exit(EXIT_CODE_SUCCESS);
         }
-        if (!OsPathBaseName(InfoTemp.fname, PATH_MSIZE, AbsPathBuffer2)) {
+        if (!OsPathBaseName(InfoTemp.fname, PATH_MAX_SIZE, AbsPathBuffer2)) {
             WHETHER_CLOSE_REMOVE(AnyfType);
             printf(MESSAGE_ERROR "获取子文件名失败：%s\n", AbsPathBuffer2);
             exit(EXIT_CODE_FAILURE);
         }
 #ifdef _WIN32
         // WIN平台需要把文件名字符转为UTF8编码的字符串
-        StringANSIToUTF8(InfoTemp.fname, PATH_MSIZE, InfoTemp.fname);
+        StringANSIToUTF8(InfoTemp.fname, PATH_MAX_SIZE, InfoTemp.fname);
 #endif // _WIN32
         InfoTemp.fnlen = (int16_t)(strlen(InfoTemp.fname) + 1);
-        if (!(SubFileStream = fopen(ToPack, "rb"))) {
+        if (!(SubFileStream = fopen(ToBePacked, "rb"))) {
             WHETHER_CLOSE_REMOVE(AnyfType);
-            printf(MESSAGE_ERROR "打开子文件失败：%s\n", ToPack);
+            printf(MESSAGE_ERROR "打开子文件失败：%s\n", ToBePacked);
             exit(EXIT_CODE_FAILURE);
         }
         AnyfSeek(SubFileStream, 0, SEEK_END);
@@ -404,13 +404,14 @@ ANYF_T *AnyfPack(const char *ToPack, bool Recursion, ANYF_T *AnyfType, bool Appe
         // 无需将[anyf]文件指针移至末尾，因为 AnyfOpen 或 AnyfMake 函数已将其移至末尾
         if ((InfoTemp.offset = AnyfTell(AnyfType->handle)) < 0LL) {
             WHETHER_CLOSE_REMOVE(AnyfType);
-            PRINT_ERROR_AND_ABORT("获取当前字段偏移量失败");
+            PRINT_ERROR_AND_ABORT("获取当前子文件信息起始偏移量失败");
         }
-        if (fwrite(&InfoTemp.fsize, FSNL_S + InfoTemp.fnlen, 1, AnyfType->handle) != 1) {
+        // 将 INFO_T 结构体从第二个成员 fsize 开始写入文件，第一个成员 offset 不需要保存到文件
+        if (fwrite(&InfoTemp.fsize, FSIZE_FNLEN_SIZE + InfoTemp.fnlen, 1, AnyfType->handle) != 1) {
             WHETHER_CLOSE_REMOVE(AnyfType);
             PRINT_ERROR_AND_ABORT("写入子文件属性失败");
         }
-        if (InfoTemp.fsize > U_BUF_SIZE) {
+        if (InfoTemp.fsize > BUF_SIZE_U) {
             if (!SubCopyToMain(SubFileStream, AnyfType->handle, &BufferRW)) {
                 WHETHER_CLOSE_REMOVE(AnyfType);
                 PRINT_ERROR_AND_ABORT("将子文件写入[anyf]文件失败\n");
@@ -430,7 +431,7 @@ ANYF_T *AnyfPack(const char *ToPack, bool Recursion, ANYF_T *AnyfType, bool Appe
             }
         }
         fclose(SubFileStream);
-        AnyfSeek(AnyfType->handle, AnyfType->start + FCNT_O, SEEK_SET);
+        AnyfSeek(AnyfType->handle, AnyfType->start + COUNT_OFFSET, SEEK_SET);
         if (fwrite(&AnyfType->head.count, sizeof(int64_t), 1, AnyfType->handle) != 1) {
             WHETHER_CLOSE_REMOVE(AnyfType);
             PRINT_ERROR_AND_ABORT("更新子文件数量失败");
@@ -443,13 +444,13 @@ ANYF_T *AnyfPack(const char *ToPack, bool Recursion, ANYF_T *AnyfType, bool Appe
             }
         }
         AnyfType->sheet[AnyfType->head.count++] = InfoTemp;
-    } else if (OsPathIsDirectory(ToPack)) {
-        if (OsPathAbsolutePath(AbsPathBuffer2, PATH_MSIZE, ToPack)) {
+    } else if (OsPathIsDirectory(ToBePacked)) {
+        if (OsPathAbsolutePath(AbsPathBuffer2, PATH_MAX_SIZE, ToBePacked)) {
             WHETHER_CLOSE_REMOVE(AnyfType);
             PRINT_ERROR_AND_ABORT("获取子文件目录绝对路径失败");
         }
-        if (ParentDIR = malloc(PATH_MSIZE)) {
-            if (!OsPathDirName(ParentDIR, PATH_MSIZE, OsPathNormpath(AbsPathBuffer2, PATH_MSIZE))) {
+        if (ParentDIR = malloc(PATH_MAX_SIZE)) {
+            if (!OsPathDirName(ParentDIR, PATH_MAX_SIZE, OsPathNormpath(AbsPathBuffer2, PATH_MAX_SIZE))) {
                 WHETHER_CLOSE_REMOVE(AnyfType);
                 PRINT_ERROR_AND_ABORT("获取子文件目录的父目录失败");
             }
@@ -475,7 +476,7 @@ ANYF_T *AnyfPack(const char *ToPack, bool Recursion, ANYF_T *AnyfType, bool Appe
             printf(MESSAGE_INFO "写入：%s\n", PathScanner->paths[i]);
             if (OsPathIsDirectory(PathScanner->paths[i])) {
                 InfoTemp.fsize = DIR_SIZE; // 目录大小定义为DIR_SIZE
-                if (OsPathRelativePath(InfoTemp.fname, PATH_MSIZE, PathScanner->paths[i], ParentDIR)) {
+                if (OsPathRelativePath(InfoTemp.fname, PATH_MAX_SIZE, PathScanner->paths[i], ParentDIR)) {
                     if (i >= PathScanner->count - 1) {
                         WHETHER_CLOSE_REMOVE(AnyfType);
                     }
@@ -484,18 +485,18 @@ ANYF_T *AnyfPack(const char *ToPack, bool Recursion, ANYF_T *AnyfType, bool Appe
                 }
 #ifdef _WIN32
                 // WIN平台要把字符串转为UTF8编码写入文件
-                StringANSIToUTF8(InfoTemp.fname, PATH_MSIZE, InfoTemp.fname);
+                StringANSIToUTF8(InfoTemp.fname, PATH_MAX_SIZE, InfoTemp.fname);
 #endif // _WIN32
                 InfoTemp.fnlen = (int16_t)(strlen(InfoTemp.fname) + 1);
                 if ((InfoTemp.offset = AnyfTell(AnyfType->handle)) < 0LL) {
                     if (i >= PathScanner->count - 1) {
                         WHETHER_CLOSE_REMOVE(AnyfType);
                     }
-                    printf(MESSAGE_WARN "跳过：获取当前字段偏移量失败\n");
+                    printf(MESSAGE_WARN "跳过：获取当前子文件信息起始偏移量失败\n");
                     continue;
                 }
                 // 按fsize、fnlen类型长度及fnlen值将finfo_tmp的一部分写入[anyf]文件
-                if (fwrite(&InfoTemp.fsize, FSNL_S + InfoTemp.fnlen, 1, AnyfType->handle) != 1) {
+                if (fwrite(&InfoTemp.fsize, FSIZE_FNLEN_SIZE + InfoTemp.fnlen, 1, AnyfType->handle) != 1) {
                     if (i >= PathScanner->count - 1) {
                         WHETHER_CLOSE_REMOVE(AnyfType);
                     } else {
@@ -518,7 +519,7 @@ ANYF_T *AnyfPack(const char *ToPack, bool Recursion, ANYF_T *AnyfType, bool Appe
                     printf(MESSAGE_WARN "跳过：此文件是正在创建的[anyf]文件\n");
                     continue;
                 }
-                if (OsPathRelativePath(InfoTemp.fname, PATH_MSIZE, PathScanner->paths[i], ParentDIR)) {
+                if (OsPathRelativePath(InfoTemp.fname, PATH_MAX_SIZE, PathScanner->paths[i], ParentDIR)) {
                     if (i >= PathScanner->count - 1) {
                         WHETHER_CLOSE_REMOVE(AnyfType);
                     }
@@ -537,7 +538,7 @@ ANYF_T *AnyfPack(const char *ToPack, bool Recursion, ANYF_T *AnyfType, bool Appe
                 // 子文件读取大小后指针移回开头备用
                 rewind(SubFileStream);
 #ifdef _WIN32 // WIN平台需要将文件名编码转为UTF8保存
-                StringANSIToUTF8(InfoTemp.fname, PATH_MSIZE, InfoTemp.fname);
+                StringANSIToUTF8(InfoTemp.fname, PATH_MAX_SIZE, InfoTemp.fname);
 #endif // _WIN32
                 InfoTemp.fnlen = (int16_t)(strlen(InfoTemp.fname) + 1);
                 if ((InfoTemp.offset = AnyfTell(AnyfType->handle)) < 0LL) {
@@ -548,7 +549,7 @@ ANYF_T *AnyfPack(const char *ToPack, bool Recursion, ANYF_T *AnyfType, bool Appe
                     printf(MESSAGE_WARN "跳过：获取[anyf]文件指针位置失败\n");
                     continue;
                 }
-                if (fwrite(&InfoTemp.fsize, FSNL_S + InfoTemp.fnlen, 1, AnyfType->handle) != 1) {
+                if (fwrite(&InfoTemp.fsize, FSIZE_FNLEN_SIZE + InfoTemp.fnlen, 1, AnyfType->handle) != 1) {
                     printf(MESSAGE_WARN "跳过：写入子文件属性失败\n");
                     if (i >= PathScanner->count - 1) {
                         WHETHER_CLOSE_REMOVE(AnyfType);
@@ -558,7 +559,7 @@ ANYF_T *AnyfPack(const char *ToPack, bool Recursion, ANYF_T *AnyfType, bool Appe
                     fclose(SubFileStream);
                     continue;
                 }
-                if (InfoTemp.fsize > U_BUF_SIZE) {
+                if (InfoTemp.fsize > BUF_SIZE_U) {
                     if (!SubCopyToMain(SubFileStream, AnyfType->handle, &BufferRW)) {
                         if (i >= PathScanner->count - 1) {
                             WHETHER_CLOSE_REMOVE(AnyfType);
@@ -600,10 +601,10 @@ ANYF_T *AnyfPack(const char *ToPack, bool Recursion, ANYF_T *AnyfType, bool Appe
         OsPathDeleteScanner(PathScanner);
     } else {
         WHETHER_CLOSE_REMOVE(AnyfType);
-        printf(MESSAGE_ERROR "路径不是文件也不是目录：%s\n", ToPack);
+        printf(MESSAGE_ERROR "路径不是文件也不是目录：%s\n", ToBePacked);
         exit(EXIT_CODE_FAILURE);
     }
-    AnyfSeek(AnyfType->handle, AnyfType->start + FCNT_O, SEEK_SET);
+    AnyfSeek(AnyfType->handle, AnyfType->start + COUNT_OFFSET, SEEK_SET);
     if (fwrite(&AnyfType->head.count, sizeof(int64_t), 1, AnyfType->handle) != 1) {
         WHETHER_CLOSE_REMOVE(AnyfType);
         PRINT_ERROR_AND_ABORT("更新[anyf]文件中的子文件数量失败");
@@ -618,16 +619,16 @@ ANYF_T *AnyfInfo(const char *AnyfPath) {
     int A, B, C;                     // 已打印的(大小、类型、路径)累计字符数
     size_t NameLenTemp;              // 每个fname长度的临时变量
     size_t NameLenMax = 0;           // 长度最大的fname的值
-    int16_t *Spec;                   // 指向head中的sp，写完显得太长
+    int16_t *Spec;                   // 指向head中的std，写完显得太长
     int64_t Index;                   // 遍历[anyf]文件中文件总数head.count
     ANYF_T *AnyfType;                // [anyf]文件信息结构体
-    char Delimiters1[EQS_MAX];       // 打印的子文件列表分隔符共用缓冲区
+    char Delimiters1[EQUAL_MAX];     // 打印的子文件列表分隔符共用缓冲区
     char *Delimiters2, *Delimiters3; // 用于将上面缓冲区分离为三个字符串
     if (AnyfIsFakeJPEG(AnyfPath))
         AnyfType = AnyfOpenFakeJPEG(AnyfPath);
     else
         AnyfType = AnyfOpen(AnyfPath);
-    Spec = AnyfType->head.sp;
+    Spec = AnyfType->head.std;
     for (Index = 0; Index < AnyfType->head.count; ++Index) {
         NameLenTemp = strlen(AnyfType->sheet[Index].fname);
         if (NameLenMax < NameLenTemp)
@@ -644,9 +645,9 @@ ANYF_T *AnyfInfo(const char *AnyfPath) {
     printf("%19s%n\t%4s%n\t%s%n\n", "大小", &A, "类型", &B, "路径和文件名", &C);
     if (NameLenMax < (size_t)C - B - 1)
         NameLenMax = (size_t)C - B - 1;
-    else if (NameLenMax >= EQS_MAX)
-        NameLenMax = EQS_MAX - 1;
-    memset(Delimiters1, '=', EQS_MAX);
+    else if (NameLenMax >= EQUAL_MAX)
+        NameLenMax = EQUAL_MAX - 1;
+    memset(Delimiters1, '=', EQUAL_MAX);
     Delimiters1[A] = EMPTY_CHAR;
     Delimiters2 = Delimiters1 + A + 1;
     Delimiters1[B] = EMPTY_CHAR;
@@ -666,17 +667,17 @@ ANYF_T *AnyfInfo(const char *AnyfPath) {
 // 从[anyf]文件中提取子文件
 ANYF_T *AnyfExtract(const char *ToExtract, const char *Destination, int Overwrite, ANYF_T *AnyfType) {
     int64_t Index;  // 循环遍历子文件时的下标
-    int64_t Offset; // 子文件字段在[anyf]文件中的偏移
+    int64_t Offset; // 子文件信息在[anyf]文件中的偏移量
 #ifdef _WIN32
-    static char NormcasedBuffer1[PATH_MSIZE];
-    static char NormcasedBuffer2[PATH_MSIZE];
+    static char NormcasedBuffer1[PATH_MAX_SIZE];
+    static char NormcasedBuffer2[PATH_MAX_SIZE];
 #endif
-    static char SubFilePathBuffer[PATH_MSIZE];
-    static char SubFilePardirBuffer[PATH_MSIZE];
+    static char SubFilePathBuffer[PATH_MAX_SIZE];
+    static char SubFilePardirBuffer[PATH_MAX_SIZE];
     BUFFER_T *BufferRW;      // 从[anyf]文件提取到子文件时的读写缓冲区
     FILE *EachSubFileHandle; // 创建子文件时每个子文件的二进制文件流句柄
-    if (BufferRW = malloc(sizeof(BUFFER_T) + L_BUF_SIZE)) {
-        BufferRW->size = L_BUF_SIZE;
+    if (BufferRW = malloc(sizeof(BUFFER_T) + BUF_SIZE_L)) {
+        BufferRW->size = BUF_SIZE_L;
     } else {
         PRINT_ERROR_AND_ABORT("为文件读写缓冲区分配内存失败");
     }
@@ -715,7 +716,7 @@ ANYF_T *AnyfExtract(const char *ToExtract, const char *Destination, int Overwrit
 #endif
         }
         printf(MESSAGE_INFO "提取：%s\n", AnyfType->sheet[Index].fname);
-        if (OsPathJoinPath(SubFilePathBuffer, PATH_MSIZE, 2, Destination, AnyfType->sheet[Index].fname)) {
+        if (OsPathJoinPath(SubFilePathBuffer, PATH_MAX_SIZE, 2, Destination, AnyfType->sheet[Index].fname)) {
             printf(MESSAGE_WARN "跳过：拼接子文件完整路径失败\n");
             continue;
         }
@@ -741,7 +742,7 @@ ANYF_T *AnyfExtract(const char *ToExtract, const char *Destination, int Overwrit
                     continue;
                 }
             }
-            if (!OsPathDirName(SubFilePardirBuffer, PATH_MSIZE, SubFilePathBuffer)) {
+            if (!OsPathDirName(SubFilePardirBuffer, PATH_MAX_SIZE, SubFilePathBuffer)) {
                 printf(MESSAGE_WARN "跳过：获取父级路径失败\n");
                 continue;
             }
@@ -759,8 +760,8 @@ ANYF_T *AnyfExtract(const char *ToExtract, const char *Destination, int Overwrit
                 printf(MESSAGE_WARN "跳过：子文件创建失败：%s\n", SubFilePathBuffer);
                 continue;
             }
-            Offset = AnyfType->sheet[Index].offset + FSNL_S + AnyfType->sheet[Index].fnlen;
-            if (AnyfType->sheet[Index].fsize > U_BUF_SIZE) {
+            Offset = AnyfType->sheet[Index].offset + FSIZE_FNLEN_SIZE + AnyfType->sheet[Index].fnlen;
+            if (AnyfType->sheet[Index].fsize > BUF_SIZE_U) {
                 if (!MainCopyToSub(AnyfType->handle, Offset, AnyfType->sheet[Index].fsize, EachSubFileHandle, &BufferRW)) {
                     printf(MESSAGE_WARN "跳过：写入子文件数据失败：%s\n", SubFilePathBuffer);
                     continue;
@@ -794,15 +795,15 @@ ANYF_T *AnyfExtract(const char *ToExtract, const char *Destination, int Overwrit
 
 // 创建空的伪装的JPEG文件
 ANYF_T *AnyfMakeFakeJPEG(const char *AnyfPath, const char *JPEGPath, bool Overwrite) {
-    ANYF_T *AnyfType;            // [anyf]文件信息结构体
-    int64_t JPEGNetSize;         // JPEG文件净大小
-    int64_t FakeJPEGSize;        // JPEG文件的总大小
-    BUFFER_T *BufferRW;          // 文件读写缓冲区
-    FILE *AnyfHandle;            // [anyf]文件文件流
-    FILE *JPEGHandle;            // JPEG文件文件流
-    char *AnyfPathCopied;        // 复制的文件路径
-    char PathBuffer[PATH_MSIZE]; // 绝对路径及父目录缓冲
-    if (OsPathAbsolutePath(PathBuffer, PATH_MSIZE, AnyfPath)) {
+    ANYF_T *AnyfType;               // [anyf]文件信息结构体
+    int64_t JPEGNetSize;            // JPEG文件净大小
+    int64_t FakeJPEGSize;           // JPEG文件的总大小
+    BUFFER_T *BufferRW;             // 文件读写缓冲区
+    FILE *AnyfHandle;               // [anyf]文件文件流
+    FILE *JPEGHandle;               // JPEG文件文件流
+    char *AnyfPathCopied;           // 复制的文件路径
+    char PathBuffer[PATH_MAX_SIZE]; // 绝对路径及父目录缓冲
+    if (OsPathAbsolutePath(PathBuffer, PATH_MAX_SIZE, AnyfPath)) {
         printf(MESSAGE_ERROR "无法获取[anyf]文件绝对路径：%s\n", AnyfPath);
         exit(EXIT_CODE_FAILURE);
     }
@@ -827,7 +828,7 @@ ANYF_T *AnyfMakeFakeJPEG(const char *AnyfPath, const char *JPEGPath, bool Overwr
         printf(MESSAGE_ERROR "无法检查此路径是否存在\n");
         exit(EXIT_CODE_FAILURE);
     }
-    if (!OsPathDirName(PathBuffer, PATH_MSIZE, PathBuffer)) {
+    if (!OsPathDirName(PathBuffer, PATH_MAX_SIZE, PathBuffer)) {
         printf(MESSAGE_ERROR "获取[anyf]文件的父目录路径失败\n");
         exit(EXIT_CODE_FAILURE);
     }
@@ -861,8 +862,8 @@ ANYF_T *AnyfMakeFakeJPEG(const char *AnyfPath, const char *JPEGPath, bool Overwr
         fclose(AnyfHandle), remove(AnyfPathCopied);
         PRINT_ERROR_AND_ABORT("读取JPEG文件大小失败");
     }
-    if (BufferRW = malloc(sizeof(BUFFER_T) + L_BUF_SIZE)) {
-        BufferRW->size = L_BUF_SIZE;
+    if (BufferRW = malloc(sizeof(BUFFER_T) + BUF_SIZE_L)) {
+        BufferRW->size = BUF_SIZE_L;
     } else {
         fclose(AnyfHandle), remove(AnyfPathCopied);
         PRINT_ERROR_AND_ABORT("为文件读写缓冲区分配内存失败");
@@ -875,7 +876,7 @@ ANYF_T *AnyfMakeFakeJPEG(const char *AnyfPath, const char *JPEGPath, bool Overwr
     } else if (JPEGNetSize == JPEG_ERROR) {
         PRINT_ERROR_AND_ABORT("验证JPEG图像过程中发生错误");
     }
-    if (FakeJPEGSize > U_BUF_SIZE) {
+    if (FakeJPEGSize > BUF_SIZE_U) {
         if (!SubCopyToMain(JPEGHandle, AnyfHandle, &BufferRW)) {
             fclose(JPEGHandle);
             fclose(AnyfHandle), remove(AnyfPathCopied);
@@ -928,17 +929,17 @@ ANYF_T *AnyfMakeFakeJPEG(const char *AnyfPath, const char *JPEGPath, bool Overwr
 
 // 打开已存在的伪装的JPEG文件
 ANYF_T *AnyfOpenFakeJPEG(const char *FakeJPEGPath) {
-    ANYF_T *AnyfType;            // [anyf]文件信息结构体
-    HEAD_T HeadTemp;             // 临时[anyf]文件头
-    INFO_T *SubFilesBOM;         // 子文件信息表
-    FILE *AnyfHandle;            // [anyf]文件流
-    char PathBuffer[PATH_MSIZE]; // 绝对路径及父目录缓冲
-    char *AnyfPathCopied;        // 拷贝路径用于结构体
-    int64_t CellsNum = 0LL;      // 子文件信息表容量
-    BUFFER_T *BufferRW;          // 文件读写缓冲区
-    int64_t FakeJPEGSize;        // 伪JPEG文件的总大小
-    int64_t JPEGNetSize;         // 伪JPEG文件净大小
-    if (OsPathAbsolutePath(PathBuffer, PATH_MSIZE, FakeJPEGPath)) {
+    ANYF_T *AnyfType;               // [anyf]文件信息结构体
+    HEAD_T HeadTemp;                // 临时[anyf]文件头
+    INFO_T *SubFilesBOM;            // 子文件信息表
+    FILE *AnyfHandle;               // [anyf]文件流
+    char PathBuffer[PATH_MAX_SIZE]; // 绝对路径及父目录缓冲
+    char *AnyfPathCopied;           // 拷贝路径用于结构体
+    int64_t CellsNum = 0LL;         // 子文件信息表容量
+    BUFFER_T *BufferRW;             // 文件读写缓冲区
+    int64_t FakeJPEGSize;           // 伪JPEG文件的总大小
+    int64_t JPEGNetSize;            // 伪JPEG文件净大小
+    if (OsPathAbsolutePath(PathBuffer, PATH_MAX_SIZE, FakeJPEGPath)) {
         printf(MESSAGE_ERROR "无法获取文件绝对路径：%s\n", FakeJPEGPath);
         exit(EXIT_CODE_FAILURE);
     }
@@ -957,8 +958,8 @@ ANYF_T *AnyfOpenFakeJPEG(const char *FakeJPEGPath) {
             exit(EXIT_CODE_FAILURE);
         }
     }
-    if (BufferRW = malloc(sizeof(BUFFER_T) + L_BUF_SIZE)) {
-        BufferRW->size = L_BUF_SIZE;
+    if (BufferRW = malloc(sizeof(BUFFER_T) + BUF_SIZE_L)) {
+        BufferRW->size = BUF_SIZE_L;
     } else {
         PRINT_ERROR_AND_ABORT("为文件读写缓冲区分配内存失败");
     }
@@ -1001,19 +1002,19 @@ ANYF_T *AnyfOpenFakeJPEG(const char *FakeJPEGPath) {
     }
     for (int64_t i = 0; i < HeadTemp.count; ++i) {
         if ((SubFilesBOM[i].offset = AnyfTell(AnyfHandle)) < 0LL) {
-            PRINT_ERROR_AND_ABORT("获取当前字段偏移量失败");
+            PRINT_ERROR_AND_ABORT("获取当前子文件信息起始偏移量失败");
         }
-        if (fread(&SubFilesBOM[i].fsize, FSNL_S, 1, AnyfHandle) != 1) {
+        if (fread(&SubFilesBOM[i].fsize, FSIZE_FNLEN_SIZE, 1, AnyfHandle) != 1) {
             PRINT_ERROR_AND_ABORT("读取子文件属性失败");
         }
-        if (SubFilesBOM[i].fnlen > PATH_MSIZE) {
+        if (SubFilesBOM[i].fnlen > PATH_MAX_SIZE) {
             PRINT_ERROR_AND_ABORT("读取到的子文件名长度异常");
         }
         if (fread(SubFilesBOM[i].fname, SubFilesBOM[i].fnlen, 1, AnyfHandle) != 1) {
             PRINT_ERROR_AND_ABORT("从[anyf]文件读取子文件名失败");
         }
 #ifdef _WIN32
-        StringUTF8ToANSI(SubFilesBOM[i].fname, PM, SubFilesBOM[i].fname);
+        StringUTF8ToANSI(SubFilesBOM[i].fname, PMS, SubFilesBOM[i].fname);
 #endif // _WIN32
        // 遇到目录(大小是-1)或文件大小为0时没有数据块不需要移动文件指针
         if (SubFilesBOM[i].fsize <= 0)

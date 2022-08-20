@@ -97,10 +97,10 @@ bool OsPathIsFile(const char *Path) {
 // 创建多级目录
 // 成功返回0，失败返回1
 int OsPathMakeDIR(const char *DirPath) {
-    static char Buffer[PATH_MSIZE + 12];
+    static char Buffer[PATH_MAX_SIZE + 12];
     char *CmdPrefix = "mkdir";
     OsPathSetState(STATUS_EXEC_SUCCESS);
-    if (!DirPath || strlen(DirPath) >= PATH_MSIZE) {
+    if (!DirPath || strlen(DirPath) >= PATH_MAX_SIZE) {
         OsPathSetState(STATUS_PATH_TOO_LONG);
         return RESULT_FAILURE;
     }
@@ -122,11 +122,11 @@ int OsPathMakeDIR(const char *DirPath) {
 // 如果参数buf为NULL，则应注意，之前引用get_cwd(NULL, 0)返回值
 // 地址的变量的值都有可能被此次运行改变
 char *OsPathGetCWD(char *Buffer, size_t Size) {
-    static char CWD[PATH_MSIZE];
+    static char CWD[PATH_MAX_SIZE];
     OsPathSetState(STATUS_EXEC_SUCCESS);
     if (NULL == Buffer) {
         Buffer = CWD;
-        Size = PATH_MSIZE;
+        Size = PATH_MAX_SIZE;
     }
 #ifndef _MSC_VER
 #ifdef _WIN32
@@ -181,7 +181,7 @@ int OsPathScanPath(const char *DirPath, int Target, int Recursion, SCANNER_T **c
     size_t DirPathLength, NumOfBytesToMalloc;
     SCANNER_T *pScannerTemp; // 仅为了让Visual Studio不显示警告
     char *pFullPathToEachFile = NULL;
-    char pPathToFindFile[PATH_MSIZE];
+    char pPathToFindFile[PATH_MAX_SIZE];
     int FinalReturnCode = RESULT_SUCCESS;
     OsPathSetState(STATUS_EXEC_SUCCESS);
     if (NULL == ppScanner || NULL == *ppScanner) {
@@ -195,12 +195,12 @@ int OsPathScanPath(const char *DirPath, int Target, int Recursion, SCANNER_T **c
         return RESULT_FAILURE;
     }
     DirPathLength = strlen(DirPath);
-    if (DirPathLength >= PATH_MSIZE) {
+    if (DirPathLength >= PATH_MAX_SIZE) {
         OsPathSetState(STATUS_PATH_TOO_LONG);
         return RESULT_FAILURE;
     }
     strcpy(pPathToFindFile, DirPath);
-    if (OsPathJoinPath(pPathToFindFile, PATH_MSIZE, 2, pPathToFindFile, OSP_AFS))
+    if (OsPathJoinPath(pPathToFindFile, PATH_MAX_SIZE, 2, pPathToFindFile, OSP_AFS))
         return RESULT_FAILURE;
     WIN32_FIND_DATAA StructWinFindData;
     HANDLE HandleOfFindFile;
@@ -359,13 +359,13 @@ CloseAndReturn:
 // 当函数返回0时，最好获取path_last_error函数返回值，并验证返回值是否是STATUS_EXEC_SUCCESS
 // 如果返回值不是STATUS_EXEC_SUCCESS，那么表示is_abs是因出错才返回0，结果将是不可靠的
 bool OsPathIsAbsolute(const char *Path) {
-    char PathBufferTemp[PATH_MSIZE];
+    char PathBufferTemp[PATH_MAX_SIZE];
     OsPathSetState(STATUS_EXEC_SUCCESS);
     if (!Path) {
         OsPathSetState(STATUS_EMPTY_POINTER);
         return RESULT_FALSE;
     }
-    if (strlen(Path) >= PATH_MSIZE) {
+    if (strlen(Path) >= PATH_MAX_SIZE) {
         OsPathSetState(STATUS_PATH_TOO_LONG);
         return RESULT_FALSE;
     }
@@ -375,7 +375,7 @@ bool OsPathIsAbsolute(const char *Path) {
     else if (!strncmp(PathBufferTemp, PATH_UNCQS, 4)) {
         OsPathSetState(STATUS_OTHER_ERRORS);
         return RESULT_TRUE;
-    } else if (OsPathSplitDrive(NULL, 0, PathBufferTemp, PATH_MSIZE, PathBufferTemp))
+    } else if (OsPathSplitDrive(NULL, 0, PathBufferTemp, PATH_MAX_SIZE, PathBufferTemp))
         return RESULT_FALSE;
     return (strlen(PathBufferTemp) > 0 && *PathBufferTemp == PATH_NSEP);
 }
@@ -389,7 +389,7 @@ char *OsPathNormcase(char *Path) {
         return NULL;
     }
     size_t Length = strlen(Path);
-    if (Length < PATH_MSIZE) {
+    if (Length < PATH_MAX_SIZE) {
         for (size_t i = 0; i < Length; ++i) {
             if (Path[i] == PATH_ASEP)
                 Path[i] = PATH_NSEP;
@@ -413,7 +413,7 @@ char *OsPathNormpath(char *Path, size_t Size) {
     size_t PathLength, Index = 0, SizeRequired = 0;
     char *FinalResult = Path;
     char *pPath = Path;
-    char PathTempArray[PATH_MSIZE];
+    char PathTempArray[PATH_MAX_SIZE];
     char **ppSplitedPath;
     char *SplitToken, *Prefix, *Suffix;
     OsPathSetState(STATUS_EXEC_SUCCESS);
@@ -422,15 +422,15 @@ char *OsPathNormpath(char *Path, size_t Size) {
         return NULL;
     }
     PathLength = strlen(Path);
-    if (PathLength >= PATH_MSIZE) {
+    if (PathLength >= PATH_MAX_SIZE) {
         OsPathSetState(STATUS_PATH_TOO_LONG);
         return NULL;
     }
     if ((PathLength >= 4) && (!strncmp(Path, PATH_UNCDS, 4) || !strncmp(Path, PATH_UNCQS, 4)))
         return FinalResult;
-    Prefix = malloc(PATH_MSIZE);
-    Suffix = malloc(PATH_MSIZE);
-    ppSplitedPath = malloc(PATH_MSIZE * sizeof(char *));
+    Prefix = malloc(PATH_MAX_SIZE);
+    Suffix = malloc(PATH_MAX_SIZE);
+    ppSplitedPath = malloc(PATH_MAX_SIZE * sizeof(char *));
     if (!ppSplitedPath || !Prefix || !Suffix) {
         FinalResult = NULL;
         OsPathSetState(STATUS_MEMORY_ERROR);
@@ -441,7 +441,7 @@ char *OsPathNormpath(char *Path, size_t Size) {
             *pPath = PATH_NSEP;
         ++pPath;
     }
-    if (OsPathSplitDrive(Prefix, PATH_MSIZE, Suffix, PATH_MSIZE, Path)) {
+    if (OsPathSplitDrive(Prefix, PATH_MAX_SIZE, Suffix, PATH_MAX_SIZE, Path)) {
         FinalResult = NULL;
         goto CleanAndReturn;
     }
@@ -521,14 +521,14 @@ CleanAndReturn:
 int OsPathSplitDrive(char DriveBuffer[], size_t DriveBufSize, char PathBuffer[], size_t PathBufferSize, const char *Path) {
     size_t PathLength;
     char *pSep3Index, *pSep4Index;
-    char PathBufferTemp[PATH_MSIZE], Normcased[PATH_MSIZE];
+    char PathBufferTemp[PATH_MAX_SIZE], Normcased[PATH_MAX_SIZE];
     OsPathSetState(STATUS_EXEC_SUCCESS);
     if (!Path) {
         OsPathSetState(STATUS_EMPTY_POINTER);
         return RESULT_FAILURE;
     }
     PathLength = strlen(Path);
-    if (PathLength >= PATH_MSIZE) {
+    if (PathLength >= PATH_MAX_SIZE) {
         OsPathSetState(STATUS_PATH_TOO_LONG);
         return RESULT_FAILURE;
     }
@@ -627,28 +627,28 @@ int OsPathJoinPath(char Buffer[], size_t BufferSize, int NumOfParam, const char 
         return RESULT_FAILURE;
     }
     SizeRequired += strlen(Path);
-    if (SizeRequired >= PATH_MSIZE) {
+    if (SizeRequired >= PATH_MAX_SIZE) {
         OsPathSetState(STATUS_INSFC_BUFFER);
         return RESULT_FAILURE;
     }
-    Driver = malloc(PATH_MSIZE);
-    PathExceptDriver = malloc(PATH_MSIZE);
-    ResultDrive = malloc(PATH_MSIZE);
-    ResultPath = malloc(PATH_MSIZE);
+    Driver = malloc(PATH_MAX_SIZE);
+    PathExceptDriver = malloc(PATH_MAX_SIZE);
+    ResultDrive = malloc(PATH_MAX_SIZE);
+    ResultPath = malloc(PATH_MAX_SIZE);
     if (!Driver || !PathExceptDriver || !ResultDrive || !ResultPath) {
         FinalReturnCode = RESULT_FAILURE;
         OsPathSetState(STATUS_MEMORY_ERROR);
         goto CleanAndReturn;
     }
     va_list ArgumentList;
-    if (OsPathSplitDrive(ResultDrive, PATH_MSIZE, ResultPath, PATH_MSIZE, Path)) {
+    if (OsPathSplitDrive(ResultDrive, PATH_MAX_SIZE, ResultPath, PATH_MAX_SIZE, Path)) {
         FinalReturnCode = RESULT_FAILURE;
         goto CleanAndReturn;
     }
     va_start(ArgumentList, Path);
     for (int i = 0; i < NumOfParam - 1; ++i) {
         EachArgument = va_arg(ArgumentList, char *);
-        if (OsPathSplitDrive(Driver, PATH_MSIZE, PathExceptDriver, PATH_MSIZE, EachArgument)) {
+        if (OsPathSplitDrive(Driver, PATH_MAX_SIZE, PathExceptDriver, PATH_MAX_SIZE, EachArgument)) {
             FinalReturnCode = RESULT_FAILURE;
             goto CleanAndReturn;
         }
@@ -656,7 +656,7 @@ int OsPathJoinPath(char Buffer[], size_t BufferSize, int NumOfParam, const char 
             if (*Driver || !*ResultDrive)
                 strcpy(ResultDrive, Driver);
             SizeRequired = strlen(PathExceptDriver);
-            if (SizeRequired >= PATH_MSIZE) {
+            if (SizeRequired >= PATH_MAX_SIZE) {
                 FinalReturnCode = RESULT_FAILURE;
                 OsPathSetState(STATUS_INSFC_BUFFER);
                 goto CleanAndReturn;
@@ -666,7 +666,7 @@ int OsPathJoinPath(char Buffer[], size_t BufferSize, int NumOfParam, const char 
         } else if (*Driver && strcmp(Driver, ResultDrive)) {
             if (strcmp(StrToLowercase(Driver), StrToLowercase(ResultDrive))) {
                 SizeRequired = strlen(PathExceptDriver);
-                if (SizeRequired >= PATH_MSIZE) {
+                if (SizeRequired >= PATH_MAX_SIZE) {
                     FinalReturnCode = RESULT_FAILURE;
                     OsPathSetState(STATUS_INSFC_BUFFER);
                     goto CleanAndReturn;
@@ -678,7 +678,7 @@ int OsPathJoinPath(char Buffer[], size_t BufferSize, int NumOfParam, const char 
             strcpy(ResultDrive, Driver);
         }
         SizeRequired += strlen(PathExceptDriver);
-        if (SizeRequired >= PATH_MSIZE) {
+        if (SizeRequired >= PATH_MAX_SIZE) {
             FinalReturnCode = RESULT_FAILURE;
             OsPathSetState(STATUS_INSFC_BUFFER);
             goto CleanAndReturn;
@@ -686,7 +686,7 @@ int OsPathJoinPath(char Buffer[], size_t BufferSize, int NumOfParam, const char 
         char ResultPathLastChar = ResultPath[strlen(ResultPath) - 1];
         if (*ResultPath && ResultPathLastChar != PATH_NSEP && ResultPathLastChar != PATH_ASEP) {
             ++SizeRequired;
-            if (SizeRequired >= PATH_MSIZE) {
+            if (SizeRequired >= PATH_MAX_SIZE) {
                 FinalReturnCode = RESULT_FAILURE;
                 OsPathSetState(STATUS_INSFC_BUFFER);
                 goto CleanAndReturn;
@@ -724,17 +724,17 @@ int OsPathSplitPath(char HeadBuffer[], size_t HeadBufSize, char TailBuffer[], si
     int Index, FinalReturnCode = RESULT_SUCCESS;
     size_t PathLength, IndexOfLastSepPlus1;
     char *FrontOfLastSep = NULL; // 右边第一个路径分隔符以左的字符串
-    char Driver[PATH_MSIZE], PathExceptDriver[PATH_MSIZE];
+    char Driver[PATH_MAX_SIZE], PathExceptDriver[PATH_MAX_SIZE];
     OsPathSetState(STATUS_EXEC_SUCCESS);
     if (!Path) {
         OsPathSetState(STATUS_EMPTY_POINTER);
         return RESULT_FAILURE;
     }
-    if (strlen(Path) >= PATH_MSIZE) {
+    if (strlen(Path) >= PATH_MAX_SIZE) {
         OsPathSetState(STATUS_PATH_TOO_LONG);
         return RESULT_FAILURE;
     }
-    if (OsPathSplitDrive(Driver, PATH_MSIZE, PathExceptDriver, PATH_MSIZE, Path))
+    if (OsPathSplitDrive(Driver, PATH_MAX_SIZE, PathExceptDriver, PATH_MAX_SIZE, Path))
         return RESULT_FAILURE;
     PathLength = IndexOfLastSepPlus1 = strlen(PathExceptDriver);
     // IndexOfLastSepPlus1：去除驱动器号后的路径的最后一个斜杠下标 +1 位置
@@ -796,10 +796,10 @@ CleanAndReturn:
 // 获取路径的上一级路径
 // 成功返回字符指针，失败返回NULL
 char *OsPathDirName(char Buffer[], size_t BufferSize, const char *Path) {
-    static char DirectoryPath[PATH_MSIZE];
+    static char DirectoryPath[PATH_MAX_SIZE];
     if (!Buffer) {
         Buffer = DirectoryPath;
-        BufferSize = PATH_MSIZE;
+        BufferSize = PATH_MAX_SIZE;
     }
     return OsPathSplitPath(Buffer, BufferSize, NULL, 0, Path) ? NULL : Buffer;
 }
@@ -807,10 +807,10 @@ char *OsPathDirName(char Buffer[], size_t BufferSize, const char *Path) {
 // 获取路径中的文件名
 // 成功返回字符指针，失败返回NULL
 char *OsPathBaseName(char Buffer[], size_t BufferSize, const char *Path) {
-    static char BaseName[PATH_MSIZE];
+    static char BaseName[PATH_MAX_SIZE];
     if (!Buffer) {
         Buffer = BaseName;
-        BufferSize = PATH_MSIZE;
+        BufferSize = PATH_MAX_SIZE;
     }
     return OsPathSplitPath(NULL, 0, Buffer, BufferSize, Path) ? NULL : Buffer;
 }
@@ -832,27 +832,27 @@ int OsPathRelativePath(char Buffer[], size_t BufferSize, const char *Path1, cons
         OsPathSetState(STATUS_EMPTY_POINTER);
         return RESULT_FAILURE;
     }
-    if (strlen(Path1) >= PATH_MSIZE) {
+    if (strlen(Path1) >= PATH_MAX_SIZE) {
         OsPathSetState(STATUS_PATH_TOO_LONG);
         return RESULT_FAILURE;
     }
-    Path1Buffer = malloc(PATH_MSIZE);
-    Path2Buffer = malloc(PATH_MSIZE);
-    Path1Absoluted = malloc(PATH_MSIZE);
-    Path2Absoluted = malloc(PATH_MSIZE);
+    Path1Buffer = malloc(PATH_MAX_SIZE);
+    Path2Buffer = malloc(PATH_MAX_SIZE);
+    Path1Absoluted = malloc(PATH_MAX_SIZE);
+    Path2Absoluted = malloc(PATH_MAX_SIZE);
     if (NULL == Path1Absoluted || NULL == Path2Absoluted || NULL == Path1Buffer || NULL == Path2Buffer) {
         OsPathSetState(STATUS_MEMORY_ERROR);
         goto CleanAndReturn;
     }
     if (!Path2)
         Path2 = PATH_CDIRS;
-    if (OsPathAbsolutePath(Path1Absoluted, PATH_MSIZE, Path1))
+    if (OsPathAbsolutePath(Path1Absoluted, PATH_MAX_SIZE, Path1))
         goto CleanAndReturn;
-    if (OsPathAbsolutePath(Path2Absoluted, PATH_MSIZE, Path2))
+    if (OsPathAbsolutePath(Path2Absoluted, PATH_MAX_SIZE, Path2))
         goto CleanAndReturn;
-    if (OsPathSplitDrive(Path1Buffer, PATH_MSIZE, Path1Absoluted, PATH_MSIZE, Path1Absoluted))
+    if (OsPathSplitDrive(Path1Buffer, PATH_MAX_SIZE, Path1Absoluted, PATH_MAX_SIZE, Path1Absoluted))
         goto CleanAndReturn;
-    if (OsPathSplitDrive(Path2Buffer, PATH_MSIZE, Path2Absoluted, PATH_MSIZE, Path2Absoluted))
+    if (OsPathSplitDrive(Path2Buffer, PATH_MAX_SIZE, Path2Absoluted, PATH_MAX_SIZE, Path2Absoluted))
         goto CleanAndReturn;
     if (strcmp(StrToLowercase(Path2Buffer), StrToLowercase(Path1Buffer))) {
         OsPathSetState(STATUS_OTHER_ERRORS);
@@ -885,7 +885,7 @@ int OsPathRelativePath(char Buffer[], size_t BufferSize, const char *Path1, cons
     Path2Buffer[0] = EMPTY_CHAR;
     for (int i = 0; i < (Path2SplitedCount - SameCountAfterSplited); ++i) {
         SizeRequired += 3;
-        if (SizeRequired >= PATH_MSIZE) {
+        if (SizeRequired >= PATH_MAX_SIZE) {
             OsPathSetState(STATUS_PATH_TOO_LONG);
             goto CleanAndReturn;
         }
@@ -894,14 +894,14 @@ int OsPathRelativePath(char Buffer[], size_t BufferSize, const char *Path1, cons
     }
     for (int i = SameCountAfterSplited; i < Path1SplitedCount; ++i) {
         SizeRequired += (int)strlen(Path1SplitedResult[i]);
-        if (SizeRequired >= PATH_MSIZE) {
+        if (SizeRequired >= PATH_MAX_SIZE) {
             OsPathSetState(STATUS_PATH_TOO_LONG);
             goto CleanAndReturn;
         }
         strcat(Path2Buffer, Path1SplitedResult[i]);
         if (i != Path1SplitedCount - 1) {
             ++SizeRequired;
-            if (SizeRequired >= PATH_MSIZE) {
+            if (SizeRequired >= PATH_MAX_SIZE) {
                 OsPathSetState(STATUS_PATH_TOO_LONG);
                 goto CleanAndReturn;
             }
@@ -949,7 +949,7 @@ int OsPathAbsolutePath(char Buffer[], size_t BufferSize, const char *Path) {
         OsPathSetState(STATUS_EMPTY_POINTER);
         return RESULT_FAILURE;
     }
-    if (strlen(Path) >= PATH_MSIZE) {
+    if (strlen(Path) >= PATH_MAX_SIZE) {
         OsPathSetState(STATUS_PATH_TOO_LONG);
         return RESULT_FAILURE;
     }
@@ -984,18 +984,18 @@ char *OsPathNormcase(char Path[]) {
 // 此函数改变原路径，成功返回缓冲区指针，失败返回NULL
 char *OsPathNormpath(char Path[], size_t Size) {
     char initial_slashes[3] = {0};
-    char PathBufferTemp[PATH_MSIZE];
-    char tmp_split[PATH_MSIZE];
+    char PathBufferTemp[PATH_MAX_SIZE];
+    char tmp_split[PATH_MAX_SIZE];
     char *FinalResult = Path;
     char *SplitToken;
-    char *PathSplitedList[PATH_MSIZE];
+    char *PathSplitedList[PATH_MAX_SIZE];
     size_t Index = 0, SizeRequired = 0;
     OsPathSetState(STATUS_EXEC_SUCCESS);
     if (!Path) {
         OsPathSetState(STATUS_EMPTY_POINTER);
         return NULL;
     }
-    if (strlen(Path) >= PATH_MSIZE) {
+    if (strlen(Path) >= PATH_MAX_SIZE) {
         OsPathSetState(STATUS_PATH_TOO_LONG);
         return NULL;
     }
@@ -1057,13 +1057,13 @@ char *OsPathNormpath(char Path[], size_t Size) {
 // 在posix平台上，驱动器号总是空字符串
 // 成功返回0，失败返回1
 int OsPathSplitDrive(char DriveBuffer[], size_t DriveBufSize, char PathBuffer[], size_t PathBufferSize, const char *Path) {
-    char PathBufferTemp[PATH_MSIZE];
+    char PathBufferTemp[PATH_MAX_SIZE];
     OsPathSetState(STATUS_EXEC_SUCCESS);
     if (!Path) {
         OsPathSetState(STATUS_EMPTY_POINTER);
         return RESULT_FAILURE;
     }
-    if (strlen(Path) >= PATH_MSIZE) {
+    if (strlen(Path) >= PATH_MAX_SIZE) {
         OsPathSetState(STATUS_PATH_TOO_LONG);
         return RESULT_FAILURE;
     }
@@ -1091,14 +1091,14 @@ int OsPathSplitDrive(char DriveBuffer[], size_t DriveBufSize, char PathBuffer[],
 // 成功返回0，失败返回1
 int OsPathJoinPath(char Buffer[], size_t BufferSize, int NumOfParam, const char *Path, ...) {
     size_t SizeRequired = 0;
-    char *EachArgument, ResultPath[PATH_MSIZE];
+    char *EachArgument, ResultPath[PATH_MAX_SIZE];
     OsPathSetState(STATUS_EXEC_SUCCESS);
     if (!Path) {
         OsPathSetState(STATUS_EMPTY_POINTER);
         return RESULT_FAILURE;
     }
     SizeRequired += strlen(Path);
-    if (SizeRequired >= PATH_MSIZE) {
+    if (SizeRequired >= PATH_MAX_SIZE) {
         OsPathSetState(STATUS_PATH_TOO_LONG);
         return RESULT_FAILURE;
     }
@@ -1109,21 +1109,21 @@ int OsPathJoinPath(char Buffer[], size_t BufferSize, int NumOfParam, const char 
         EachArgument = va_arg(ArgumentList, char *);
         if (EachArgument[0] == PATH_NSEP) {
             SizeRequired = strlen(EachArgument);
-            if (SizeRequired >= PATH_MSIZE) {
+            if (SizeRequired >= PATH_MAX_SIZE) {
                 OsPathSetState(STATUS_PATH_TOO_LONG);
                 return RESULT_FAILURE;
             }
             strcpy(ResultPath, EachArgument);
         } else if (!*ResultPath || ResultPath[strlen(ResultPath) - 1] == PATH_NSEP) {
             SizeRequired += strlen(EachArgument);
-            if (SizeRequired >= PATH_MSIZE) {
+            if (SizeRequired >= PATH_MAX_SIZE) {
                 OsPathSetState(STATUS_PATH_TOO_LONG);
                 return RESULT_FAILURE;
             }
             strcat(ResultPath, EachArgument);
         } else {
             SizeRequired += 1 + strlen(EachArgument);
-            if (SizeRequired >= PATH_MSIZE) {
+            if (SizeRequired >= PATH_MAX_SIZE) {
                 OsPathSetState(STATUS_PATH_TOO_LONG);
                 return RESULT_FAILURE;
             }
@@ -1144,15 +1144,15 @@ int OsPathJoinPath(char Buffer[], size_t BufferSize, int NumOfParam, const char 
 // 成功返回0，失败返回1
 int OsPathSplitPath(char HeadBuffer[], size_t HeadBufSize, char TailBuffer[], size_t TailBufSize, const char *Path) {
     size_t Length, IndexOfLastSepPlus1;
-    char head[PATH_MSIZE];
-    char PathBufferTemp[PATH_MSIZE];
-    char stk_tmp[PATH_MSIZE];
+    char head[PATH_MAX_SIZE];
+    char PathBufferTemp[PATH_MAX_SIZE];
+    char stk_tmp[PATH_MAX_SIZE];
     OsPathSetState(STATUS_EXEC_SUCCESS);
     if (!Path) {
         OsPathSetState(STATUS_EMPTY_POINTER);
         return RESULT_FAILURE;
     }
-    if (strlen(Path) >= PATH_MSIZE) {
+    if (strlen(Path) >= PATH_MAX_SIZE) {
         OsPathSetState(STATUS_PATH_TOO_LONG);
         return RESULT_FAILURE;
     }
@@ -1194,9 +1194,9 @@ int OsPathSplitPath(char HeadBuffer[], size_t HeadBufSize, char TailBuffer[], si
 // 获取路径的上一级路径
 // 成功返回字符指针，失败返回NULL
 char *OsPathDirName(char Buffer[], size_t BufferSize, const char *Path) {
-    static char DirPath[PATH_MSIZE];
+    static char DirPath[PATH_MAX_SIZE];
     if (!Buffer) {
-        BufferSize = PATH_MSIZE;
+        BufferSize = PATH_MAX_SIZE;
         Buffer = DirPath;
     }
     return OsPathSplitPath(Buffer, BufferSize, NULL, 0, Path) ? NULL : Buffer;
@@ -1205,9 +1205,9 @@ char *OsPathDirName(char Buffer[], size_t BufferSize, const char *Path) {
 // 获取路径中的文件名
 // 成功返回字符指针，失败返回NULL
 char *OsPathBaseName(char Buffer[], size_t BufferSize, const char *Path) {
-    static char BaseName[PATH_MSIZE];
+    static char BaseName[PATH_MAX_SIZE];
     if (!Buffer) {
-        BufferSize = PATH_MSIZE;
+        BufferSize = PATH_MAX_SIZE;
         Buffer = BaseName;
     }
     return OsPathSplitPath(NULL, 0, Buffer, BufferSize, Path) ? NULL : Buffer;
@@ -1229,13 +1229,13 @@ int OsPathRelativePath(char Buffer[], size_t BufferSize, const char *Path, const
         OsPathSetState(STATUS_EMPTY_POINTER);
         return RESULT_FAILURE;
     }
-    if (strlen(Path) >= PATH_MSIZE) {
+    if (strlen(Path) >= PATH_MAX_SIZE) {
         OsPathSetState(STATUS_PATH_TOO_LONG);
         return RESULT_FAILURE;
     }
-    Path1Absoluted = malloc(PATH_MSIZE);
-    Path2Absoluted = malloc(PATH_MSIZE);
-    PathBufferTemp = malloc(PATH_MSIZE);
+    Path1Absoluted = malloc(PATH_MAX_SIZE);
+    Path2Absoluted = malloc(PATH_MAX_SIZE);
+    PathBufferTemp = malloc(PATH_MAX_SIZE);
     if (!Path1Absoluted || !Path2Absoluted || !PathBufferTemp) {
         FinalReturnCode = RESULT_FAILURE;
         OsPathSetState(STATUS_MEMORY_ERROR);
@@ -1243,11 +1243,11 @@ int OsPathRelativePath(char Buffer[], size_t BufferSize, const char *Path, const
     }
     if (!Path2)
         Path2 = PATH_CDIRS;
-    if (OsPathAbsolutePath(Path1Absoluted, PATH_MSIZE, Path)) {
+    if (OsPathAbsolutePath(Path1Absoluted, PATH_MAX_SIZE, Path)) {
         FinalReturnCode = RESULT_FAILURE;
         goto CleanAndReturn;
     }
-    if (OsPathAbsolutePath(Path2Absoluted, PATH_MSIZE, Path2)) {
+    if (OsPathAbsolutePath(Path2Absoluted, PATH_MAX_SIZE, Path2)) {
         FinalReturnCode = RESULT_FAILURE;
         goto CleanAndReturn;
     }
@@ -1283,7 +1283,7 @@ int OsPathRelativePath(char Buffer[], size_t BufferSize, const char *Path, const
     PathBufferTemp[0] = EMPTY_CHAR;
     for (int i = 0; i < (Path2SplitedCount - SameCountAfterSplited); ++i) {
         SizeRequired += 3;
-        if (SizeRequired >= PATH_MSIZE) {
+        if (SizeRequired >= PATH_MAX_SIZE) {
             FinalReturnCode = RESULT_FAILURE;
             OsPathSetState(STATUS_PATH_TOO_LONG);
             goto CleanAndReturn;
@@ -1293,7 +1293,7 @@ int OsPathRelativePath(char Buffer[], size_t BufferSize, const char *Path, const
     }
     for (int i = SameCountAfterSplited; i < Path1SplitedCount; ++i) {
         SizeRequired += strlen(Path1SplitedResult[i]);
-        if (SizeRequired >= PATH_MSIZE) {
+        if (SizeRequired >= PATH_MAX_SIZE) {
             FinalReturnCode = RESULT_FAILURE;
             OsPathSetState(STATUS_PATH_TOO_LONG);
             goto CleanAndReturn;
@@ -1301,7 +1301,7 @@ int OsPathRelativePath(char Buffer[], size_t BufferSize, const char *Path, const
         strcat(PathBufferTemp, Path1SplitedResult[i]);
         if (i != Path1SplitedCount - 1) {
             ++SizeRequired;
-            if (SizeRequired >= PATH_MSIZE) {
+            if (SizeRequired >= PATH_MAX_SIZE) {
                 FinalReturnCode = RESULT_FAILURE;
                 OsPathSetState(STATUS_PATH_TOO_LONG);
                 goto CleanAndReturn;
@@ -1341,15 +1341,15 @@ CleanAndReturn:
 // 功能：生成给定路径的绝对路径
 // 成功返回0，失败返回1
 int OsPathAbsolutePath(char Buffer[], size_t BufferSize, const char *Path) {
-    char PathBufferTemp[PATH_MSIZE] = {0};
+    char PathBufferTemp[PATH_MAX_SIZE] = {0};
     char *end_ch = PathBufferTemp;
     if (!OsPathIsAbsolute(Path)) {
         if (OsPathLastState())
             return RESULT_FAILURE;
-        if (!OsPathGetCWD(PathBufferTemp, PATH_MSIZE))
+        if (!OsPathGetCWD(PathBufferTemp, PATH_MAX_SIZE))
             return RESULT_FAILURE;
     }
-    if (strlen(PathBufferTemp) + strlen(Path) >= PATH_MSIZE) {
+    if (strlen(PathBufferTemp) + strlen(Path) >= PATH_MAX_SIZE) {
         OsPathSetState(STATUS_PATH_TOO_LONG);
         return RESULT_FAILURE;
     }
@@ -1358,14 +1358,14 @@ int OsPathAbsolutePath(char Buffer[], size_t BufferSize, const char *Path) {
     if (end_ch != PathBufferTemp)
         --end_ch;
     if (*end_ch != PATH_NSEP && *Path != PATH_NSEP) {
-        if (strlen(PathBufferTemp) + 1 >= PATH_MSIZE) {
+        if (strlen(PathBufferTemp) + 1 >= PATH_MAX_SIZE) {
             OsPathSetState(STATUS_PATH_TOO_LONG);
             return RESULT_FAILURE;
         }
         strcat(PathBufferTemp, PATH_NSEPS);
     }
     strcat(PathBufferTemp, Path);
-    if (!OsPathNormpath(PathBufferTemp, PATH_MSIZE))
+    if (!OsPathNormpath(PathBufferTemp, PATH_MAX_SIZE))
         return RESULT_FAILURE;
     if (BufferSize <= strlen(PathBufferTemp)) {
         OsPathSetState(STATUS_INSFC_BUFFER);
@@ -1383,7 +1383,7 @@ int OsPathAbsolutePath(char Buffer[], size_t BufferSize, const char *Path) {
 int OsPathSplitExt(char HeadBuffer[], size_t HeadBufSize, char ExtBuffer[], size_t ExtBufSize, const char *Path, int ExtSep) {
     size_t PathLength, DotIndex;
     char *pNormSepIndex, *pAltSepIndex, *pDotIndex;
-    char PathBufferTemp[PATH_MSIZE];
+    char PathBufferTemp[PATH_MAX_SIZE];
     const char *pNameIndex;
     OsPathSetState(STATUS_EXEC_SUCCESS);
     if (!Path) {
@@ -1391,7 +1391,7 @@ int OsPathSplitExt(char HeadBuffer[], size_t HeadBufSize, char ExtBuffer[], size
         return RESULT_FAILURE;
     }
     PathLength = strlen(Path);
-    if (PathLength >= PATH_MSIZE) {
+    if (PathLength >= PATH_MAX_SIZE) {
         OsPathSetState(STATUS_PATH_TOO_LONG);
         return RESULT_FAILURE;
     }
@@ -1463,26 +1463,26 @@ int OsPathPrunePath(char Buffer[], size_t BufferSize, const char *Path) {
         OsPathSetState(STATUS_EMPTY_POINTER);
         return RESULT_FAILURE;
     }
-    if (strlen(Path) >= PATH_MSIZE) {
+    if (strlen(Path) >= PATH_MAX_SIZE) {
         OsPathSetState(STATUS_PATH_TOO_LONG);
         return RESULT_FAILURE;
     }
-    PathBufferTemp1 = malloc(PATH_MSIZE * sizeof(char));
-    PathBufferTemp2 = malloc(PATH_MSIZE * sizeof(char));
-    PathSplitedList = malloc(PATH_MSIZE * sizeof(char *));
+    PathBufferTemp1 = malloc(PATH_MAX_SIZE * sizeof(char));
+    PathBufferTemp2 = malloc(PATH_MAX_SIZE * sizeof(char));
+    PathSplitedList = malloc(PATH_MAX_SIZE * sizeof(char *));
     if (!PathBufferTemp1 || !PathBufferTemp2 || !PathSplitedList) {
         FinalReturnCode = RESULT_FAILURE;
         OsPathSetState(STATUS_MEMORY_ERROR);
         goto ClearAndReturn;
     }
     strcpy(PathBufferTemp1, Path);
-    if (!OsPathNormpath(PathBufferTemp1, PATH_MSIZE)) {
+    if (!OsPathNormpath(PathBufferTemp1, PATH_MAX_SIZE)) {
         FinalReturnCode = RESULT_FAILURE;
         goto ClearAndReturn;
     }
     Token = strtok(PathBufferTemp1, PATH_NSEPS);
     while (Token) {
-        if (TokenCount > PATH_MSIZE) {
+        if (TokenCount > PATH_MAX_SIZE) {
             FinalReturnCode = RESULT_FAILURE;
             OsPathSetState(STATUS_PATH_TOO_LONG);
             goto ClearAndReturn;
