@@ -81,11 +81,11 @@ typedef struct {
 // 子文件信息，包括文件大小,文件名长度,文件名
 // 注意结构体成员的内存对齐
 // 因为要把结构体直接写入到文件或从文件直接读取
-// 写入[ANYF]文件时从 fsize 开始写，offset 不写入文件
+// 写入 ANYF 文件时从 fsize 开始写，offset 不写入文件
 // 子文件信息：<fsize、fnlen、fname、子文件字节码>为一个子文件信息
 #pragma pack(2)
 typedef struct {
-    int64_t offset;  // 子文件信息在[ANYF]中的偏移量
+    int64_t offset;  // 子文件信息在 ANYF 中的偏移量
     int64_t fsize;   // 子文件数据内容的字节数大小
     int16_t fnlen;   // 子文件的文件名长度
     char fname[PMS]; // 子文件的文件名字符串，UTF8编码
@@ -102,7 +102,7 @@ typedef struct {
     FILE *handle;  // 打开的二进制流
 } ANYF_T;
 
-// 默认[ANYF]文件头信息，可修改 id 内容以自定义文件标识
+// 默认 ANYF 文件头信息，可修改 id 内容以自定义文件标识
 static const HEAD_T DEFAULT_HEAD = {
     // 格式标识："\377Anyf Momo\0"等16字节，余下为零
     .id =
@@ -122,7 +122,7 @@ static const HEAD_T DEFAULT_HEAD = {
     .std = {22, 1, 0, 6},
     // 预留的 256 个字节用于可能增加的信息
     .emt = {0},
-    // [ANYF]文件中包含的子文件总数，初始总数总是设置为零
+    // ANYF 文件中包含的子文件总数，初始总数总是设置为零
     .count = 0LL,
 };
 
@@ -144,8 +144,8 @@ static const HEAD_T DEFAULT_HEAD = {
 #define EMT_SIZE   (EMT_COUNT * sizeof(char))    // HEAD_T 的 emt 成员大小
 #define COUNT_SIZE (sizeof(int64_t))             // HEAD_T 的 count 成员大小
 
-#define COUNT_OFFSET     (ID_SIZE + STD_SIZE + EMT_SIZE)              // HEAD_T 中的 count 在[ANYF]文件中的偏移量
-#define SUBDATA_OFFSET   (ID_SIZE + STD_SIZE + EMT_SIZE + COUNT_SIZE) // [ANYF]文件中首个子文件信息(见前面注释)起始偏移量
+#define COUNT_OFFSET     (ID_SIZE + STD_SIZE + EMT_SIZE)              // HEAD_T 中的 count 在 ANYF 文件中的偏移量
+#define SUBDATA_OFFSET   (ID_SIZE + STD_SIZE + EMT_SIZE + COUNT_SIZE) // ANYF 文件中首个子文件信息(见前面注释)起始偏移量
 #define FSIZE_FNLEN_SIZE (FSIZE_SIZE + FNLEN_SIZE)                    // INFO_T 中 fsize 和 fnlen 两个成员的大小之和
 
 ANYF_T *AnyfMake(const char *AnyfPath, bool Overwrite);

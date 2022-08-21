@@ -17,7 +17,7 @@ int ParseCommands(int argc, char **argvs) {
     bool Append = false;
     bool Recursion = false;
     int SubOption;
-    ANYF_T *pAnyfType; // [ANYF]文件信息结构体指针
+    ANYF_T *pAnyfType; // ANYF 文件信息结构体指针
     static char AnyfFilePath[PATH_MAX_SIZE];
     static char TargetPath[PATH_MAX_SIZE];
     static char JPEGFilePath[PATH_MAX_SIZE];
@@ -27,10 +27,10 @@ int ParseCommands(int argc, char **argvs) {
     // 主命令，必须是第一个命令行参数
     const char *MAINCMD_HELP = "help"; // 显示此程序的帮助信息
     const char *MAINCMD_VERS = "vers"; // 显示此程序的版本信息
-    const char *MAINCMD_INFO = "info"; // 显示[ANYF]文件信息及其子文件列表
-    const char *MAINCMD_PACK = "pack"; // 将目录或文件打包为[ANYF]文件
-    const char *MAINCMD_FAKE = "fake"; // 打包目录或文件并将其伪装为JPEG文件
-    const char *MAINCMD_EXTR = "extr"; // 从[ANYF]文件中提取目录或文件
+    const char *MAINCMD_INFO = "info"; // 显示 ANYF 文件信息及其子文件列表
+    const char *MAINCMD_PACK = "pack"; // 将目录或文件打包为 ANYF 文件
+    const char *MAINCMD_FAKE = "fake"; // 打包目录或文件并将其伪装为 JPEG 文件
+    const char *MAINCMD_EXTR = "extr"; // 从 ANYF 文件中提取目录或文件
 
     const char *SUBCMD_INFO = "f:";        // 主命令[info]的子选项
     const char *SUBCMD_PACK = "f:t:ora";   // 主命令[pack]的子选项
@@ -38,7 +38,7 @@ int ParseCommands(int argc, char **argvs) {
     const char *SUBCMD_EXTR = "f:t:n:o";   // 主命令[extr]的子选项
 
     if (argc < 2) {
-        fprintf(stderr, MESSAGE_ERROR "命令行参数不足，请使用 %s 命令查看使用帮助。\n", MAINCMD_HELP);
+        fprintf(stderr, MESSAGE_ERROR "命令行参数不足，请使用 %s 命令查看使用帮助\n", MAINCMD_HELP);
         return EXIT_CODE_FAILURE;
     }
     AnyfFilePath[0] = EMPTY_CHAR;
@@ -79,24 +79,24 @@ int ParseCommands(int argc, char **argvs) {
                 Overwrite = true;
                 break;
             default:
-                fprintf(stderr, MESSAGE_ERROR "没有此选项：-%c，请使用'%s %s'命令查看使用帮助。", optopt, Executable, MAINCMD_HELP);
+                fprintf(stderr, MESSAGE_ERROR "没有此选项：-%c，请使用'%s %s'命令查看使用帮助", optopt, Executable, MAINCMD_HELP);
                 return EXIT_CODE_FAILURE;
             }
         }
         if (!*AnyfFilePath) {
-            fprintf(stderr, MESSAGE_ERROR "没有输入[ANYF]文件路径，此路径应使用[-f]选项指定\n");
+            fprintf(stderr, MESSAGE_ERROR "没有输入 ANYF 文件路径，此路径应使用[-f]选项指定\n");
             return EXIT_CODE_FAILURE;
         }
         if (!*TargetPath) {
             fprintf(stderr, MESSAGE_ERROR "没有输入要打包的目标路径，此路径应使用[-t]选项指定\n");
             return EXIT_CODE_FAILURE;
         }
-        // 指定了 -a 选项且 [ANYF] 文件存在，则 -o 选项不生效
+        // 指定了 -a 选项且 ANYF 文件存在，则 -o 选项不生效
         if (OsPathExists(AnyfFilePath) && Append) {
             pAnyfType = AnyfOpen(AnyfFilePath);
         } else {
-            // 指定了 -a 选项但 [ANYF] 文件不存在，则 -a / -o 选项无意义
-            // 未指定 -a 选项但 [ANYF] 文件存在，则指定 -o 选项将覆盖文件
+            // 指定了 -a 选项但 ANYF 文件不存在，则 -a / -o 选项无意义
+            // 未指定 -a 选项但 ANYF 文件存在，则指定 -o 选项将覆盖文件
             pAnyfType = AnyfMake(AnyfFilePath, Overwrite);
         }
         AnyfPack(TargetPath, Recursion, pAnyfType, Append);
@@ -130,12 +130,12 @@ int ParseCommands(int argc, char **argvs) {
                 Overwrite = true;
                 break;
             default:
-                fprintf(stderr, MESSAGE_ERROR "没有此选项：-%c，请使用'%s %s'命令查看使用帮助。", optopt, Executable, MAINCMD_HELP);
+                fprintf(stderr, MESSAGE_ERROR "没有此选项：-%c，请使用'%s %s'命令查看使用帮助", optopt, Executable, MAINCMD_HELP);
                 return EXIT_CODE_FAILURE;
             }
         }
         if (!*AnyfFilePath) {
-            fprintf(stderr, MESSAGE_ERROR "没有输入[ANYF]文件路径，此路径应使用[-f]选项指定\n");
+            fprintf(stderr, MESSAGE_ERROR "没有输入 ANYF 文件路径，此路径应使用[-f]选项指定\n");
             return EXIT_CODE_FAILURE;
         }
         if (!*TargetPath)
@@ -160,12 +160,12 @@ int ParseCommands(int argc, char **argvs) {
                 strcpy(AnyfFilePath, optarg);
                 break;
             default:
-                fprintf(stderr, MESSAGE_ERROR "没有此选项：-%c，请使用'%s %s'命令查看使用帮助。", optopt, Executable, MAINCMD_HELP);
+                fprintf(stderr, MESSAGE_ERROR "没有此选项：-%c，请使用'%s %s'命令查看使用帮助", optopt, Executable, MAINCMD_HELP);
                 return EXIT_CODE_FAILURE;
             }
         }
         if (!*AnyfFilePath) {
-            fprintf(stderr, MESSAGE_ERROR "没有输入[ANYF]文件路径，此路径应使用[-f]选项指定\n");
+            fprintf(stderr, MESSAGE_ERROR "没有输入 ANYF 文件路径，此路径应使用[-f]选项指定\n");
             return EXIT_CODE_FAILURE;
         }
         pAnyfType = AnyfInfo(AnyfFilePath);
@@ -205,12 +205,12 @@ int ParseCommands(int argc, char **argvs) {
                 strcpy(JPEGFilePath, optarg);
                 break;
             default:
-                fprintf(stderr, MESSAGE_ERROR "没有此选项：-%c，请使用'%s %s'命令查看使用帮助。", optopt, Executable, MAINCMD_HELP);
+                fprintf(stderr, MESSAGE_ERROR "没有此选项：-%c，请使用'%s %s'命令查看使用帮助", optopt, Executable, MAINCMD_HELP);
                 return EXIT_CODE_FAILURE;
             }
         }
         if (!*AnyfFilePath) {
-            fprintf(stderr, MESSAGE_ERROR "没有输入[ANYF]文件路径，此路径应使用[-f]选项指定\n");
+            fprintf(stderr, MESSAGE_ERROR "没有输入 ANYF 文件路径，此路径应使用[-f]选项指定\n");
             return EXIT_CODE_FAILURE;
         }
         if (!*TargetPath) {
@@ -218,12 +218,12 @@ int ParseCommands(int argc, char **argvs) {
             return EXIT_CODE_FAILURE;
         }
         if (!*JPEGFilePath) {
-            fprintf(stderr, MESSAGE_ERROR "没有输入[JPEG]文件路径，此路径应使用[-j]选项指定\n");
+            fprintf(stderr, MESSAGE_ERROR "没有输入 JPEG 文件路径，此路径应使用[-j]选项指定\n");
             return EXIT_CODE_FAILURE;
         }
         // 选项 -a 和 -o 同时出现的处理办法见 MAINCMD_PACK 命令的注释
         if (OsPathExists(AnyfFilePath) && Append) {
-            printf(MESSAGE_WARN "已存在[ANYF]文件，[-j]选项将不生效。\n");
+            printf(MESSAGE_WARN "已存在 ANYF 文件且指定追加打包，[-j]选项不生效\n");
             pAnyfType = AnyfOpenFakeJPEG(AnyfFilePath);
         } else {
             pAnyfType = AnyfMakeFakeJPEG(AnyfFilePath, JPEGFilePath, Overwrite);
@@ -232,7 +232,7 @@ int ParseCommands(int argc, char **argvs) {
         AnyfClose(pAnyfType);
         return EXIT_CODE_SUCCESS;
     } else {
-        fprintf(stderr, MESSAGE_ERROR "没有此命令：%s，请使用'%s %s'命令查看使用帮助。\n", argvs[1], Executable, MAINCMD_HELP);
+        fprintf(stderr, MESSAGE_ERROR "没有此命令：%s，请使用'%s %s'命令查看使用帮助\n", argvs[1], Executable, MAINCMD_HELP);
         return EXIT_CODE_FAILURE;
     }
     return EXIT_CODE_SUCCESS;
