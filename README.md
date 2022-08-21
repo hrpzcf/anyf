@@ -4,6 +4,12 @@
 
 <br>
 
+# 说明
+
+此仓库是本人仓库 [fapck-github](https://github.com/hrpzcf/fpack) 或 [fpack-gitee](https://gitee.com/hrpzcf/fpack) 的副本，是为了程序改名而创建的，此仓库在`fpack`基础上修复问题和改进，原仓库不再更新。由于此仓库的程序修改了生成的文件的标识符，所以`anyf`和`fapck`无法互相读取对方生成的文件。
+
+<br>
+
 # 目录导航
 
 - [系统支持](#系统支持)
