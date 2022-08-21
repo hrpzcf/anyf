@@ -981,6 +981,12 @@ ANYF_T *AnyfOpenFakeJPEG(const char *FakeJPEGPath) {
         printf(MESSAGE_ERROR "查找JPEG结束标记点时出错\n");
         exit(EXIT_CODE_FAILURE);
     }
+    // 计算 JPEG 总大小与净大小之差是否大于 HeadTemp 的大小
+    // 目的是确认 JPEG 文件末尾是否至少含有[ANYF]文件头大小的其他数据
+    if (FakeJPEGSize - JPEGNetSize <= sizeof(HeadTemp)) {
+        printf(MESSAGE_ERROR "指定的JPEG文件内不包含[ANYF]文件\n");
+        exit(EXIT_CODE_FAILURE);
+    }
     if (AnyfSeek(AnyfHandle, JPEGNetSize, SEEK_SET)) {
         printf(MESSAGE_ERROR "移动文件指针失败\n");
         exit(EXIT_CODE_FAILURE);
@@ -989,7 +995,7 @@ ANYF_T *AnyfOpenFakeJPEG(const char *FakeJPEGPath) {
         PRINT_ERROR_AND_ABORT("读取[ANYF]文件头失败");
     }
     if (memcmp(DEFAULT_HEAD.id, HeadTemp.id, sizeof(DEFAULT_HEAD.id))) {
-        printf(MESSAGE_ERROR "此JPEG文件内不包含[ANYF]文件\n");
+        printf(MESSAGE_ERROR "指定的JPEG文件内不包含[ANYF]文件\n");
         exit(EXIT_CODE_FAILURE);
     }
     if (HeadTemp.count > 0)
