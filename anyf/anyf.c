@@ -174,7 +174,7 @@ ANYF_T *AnyfMake(const char *AnyfPath, bool Overwrite) {
         printf(MESSAGE_ERROR "无法获取 ANYF 文件绝对路径：%s\n", AnyfPath);
         exit(EXIT_CODE_FAILURE);
     }
-    printf(MESSAGE_INFO "创建 ANYF 文件：%s\n", PathBuffer);
+    printf(MESSAGE_INFO "创建文件：%s\n", PathBuffer);
     AnyfPathCopied = malloc(strlen(PathBuffer) + 1ULL);
     if (!AnyfPathCopied) {
         PRINT_ERROR_AND_ABORT("为 ANYF 文件路径数组分配内存失败");
@@ -246,7 +246,7 @@ ANYF_T *AnyfOpen(const char *fp_path) {
         printf(MESSAGE_ERROR "无法获取 ANYF 文件绝对路径：%s\n", fp_path);
         exit(EXIT_CODE_FAILURE);
     }
-    printf(MESSAGE_INFO "打开 ANYF 文件：%s\n", PathBuffer);
+    printf(MESSAGE_INFO "打开文件：%s\n", PathBuffer);
     AnyfPathCopied = malloc(strlen(PathBuffer) + 1ULL);
     if (!AnyfPathCopied) {
         PRINT_ERROR_AND_ABORT("为 ANYF 文件文件名分配内存失败");
@@ -380,7 +380,7 @@ ANYF_T *AnyfPack(const char *ToBePacked, bool Recursion, ANYF_T *AnyfType, bool 
 #endif // _WIN32
         {
             WHETHER_CLOSE_REMOVE(AnyfType);
-            printf(MESSAGE_ERROR "退出：此文件是正在创建的 ANYF 文件\n");
+            printf(MESSAGE_ERROR "退出：此文件是当前 ANYF 文件\n");
             exit(EXIT_CODE_SUCCESS);
         }
         if (!OsPathBaseName(InfoTemp.fname, PATH_MAX_SIZE, AbsPathBuffer2)) {
@@ -516,7 +516,7 @@ ANYF_T *AnyfPack(const char *ToBePacked, bool Recursion, ANYF_T *AnyfType, bool 
                     if (i >= PathScanner->count - 1) {
                         WHETHER_CLOSE_REMOVE(AnyfType);
                     }
-                    printf(MESSAGE_WARN "跳过：此文件是正在创建的 ANYF 文件\n");
+                    printf(MESSAGE_WARN "跳过：此文件是当前 ANYF 文件\n");
                     continue;
                 }
                 if (OsPathRelativePath(InfoTemp.fname, PATH_MAX_SIZE, PathScanner->paths[i], ParentDIR)) {
@@ -738,7 +738,7 @@ ANYF_T *AnyfExtract(const char *ToExtract, const char *Destination, int Overwrit
                     continue;
                 }
                 if (!Overwrite) {
-                    printf(MESSAGE_WARN "跳过：文件已存在且未指定覆盖：%s\n", SubFilePathBuffer);
+                    printf(MESSAGE_WARN "跳过：文件已存在但不允许覆盖：%s\n", SubFilePathBuffer);
                     continue;
                 }
             }
@@ -807,7 +807,7 @@ ANYF_T *AnyfMakeFakeJPEG(const char *AnyfPath, const char *JPEGPath, bool Overwr
         printf(MESSAGE_ERROR "无法获取 ANYF 文件绝对路径：%s\n", AnyfPath);
         exit(EXIT_CODE_FAILURE);
     }
-    printf(MESSAGE_INFO "创建 ANYF 文件：%s\n", PathBuffer);
+    printf(MESSAGE_INFO "创建文件：%s\n", PathBuffer);
     AnyfPathCopied = malloc(strlen(PathBuffer) + 1ULL);
     if (!AnyfPathCopied) {
         PRINT_ERROR_AND_ABORT("为 ANYF 文件路径数组分配内存失败");
@@ -842,7 +842,7 @@ ANYF_T *AnyfMakeFakeJPEG(const char *AnyfPath, const char *JPEGPath, bool Overwr
         exit(EXIT_CODE_FAILURE);
     }
     if (!OsPathIsFile(JPEGPath)) {
-        printf(MESSAGE_ERROR "指定的图像路径不是一个文件或不存在：%s\n", JPEGPath);
+        printf(MESSAGE_ERROR "指定的图片路径不是一个文件或不存在：%s\n", JPEGPath);
         exit(EXIT_CODE_FAILURE);
     }
     if (!(AnyfHandle = fopen(AnyfPathCopied, "wb"))) {
@@ -943,7 +943,7 @@ ANYF_T *AnyfOpenFakeJPEG(const char *FakeJPEGPath) {
         printf(MESSAGE_ERROR "无法获取文件绝对路径：%s\n", FakeJPEGPath);
         exit(EXIT_CODE_FAILURE);
     }
-    printf(MESSAGE_INFO "打开 ANYF 文件：%s\n", PathBuffer);
+    printf(MESSAGE_INFO "打开文件：%s\n", PathBuffer);
     AnyfPathCopied = malloc(strlen(PathBuffer) + 1ULL);
     if (!AnyfPathCopied) {
         PRINT_ERROR_AND_ABORT("为 ANYF 文件文件名分配内存失败");
@@ -971,14 +971,14 @@ ANYF_T *AnyfOpenFakeJPEG(const char *FakeJPEGPath) {
         PRINT_ERROR_AND_ABORT("无法移动文件指针至末尾");
     }
     if ((FakeJPEGSize = AnyfTell(AnyfHandle)) < 0) {
-        PRINT_ERROR_AND_ABORT("获取伪图文件大小失败");
+        PRINT_ERROR_AND_ABORT("获取伪装为 JPEG 的 ANYF 文件大小失败");
     }
     JPEGNetSize = RealSizeOfJPEG(AnyfHandle, FakeJPEGSize, &BufferRW);
     if (JPEGNetSize == JPEG_INVALID) {
-        printf(MESSAGE_WARN "无效的 JPEG 文件\n");
+        printf(MESSAGE_WARN "当前 ANYF 文件没有伪装为 JPEG 文件\n");
         exit(EXIT_CODE_FAILURE);
     } else if (JPEGNetSize == JPEG_ERROR) {
-        printf(MESSAGE_ERROR "查找 JPEG 结束标记点时出错\n");
+        printf(MESSAGE_ERROR "验证伪装为 JPEG 的 ANYF 文件过程中发生错误\n");
         exit(EXIT_CODE_FAILURE);
     }
     // 计算 JPEG 总大小与净大小之差是否大于 HeadTemp 的大小
