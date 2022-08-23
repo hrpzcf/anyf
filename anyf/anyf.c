@@ -4,8 +4,8 @@
 
 // 扩充子文件信息表容量
 static bool ExpandBOM(ANYF_T *AnyfType, size_t Capacity) {
-    INFO_T *finfo_tmp;
-    size_t exp_size;
+    INFO_T *InfoTemp;
+    size_t SizeForRealloc;
     if (!AnyfType)
         return false;
     if (Capacity > INT64_MAX)
@@ -13,10 +13,10 @@ static bool ExpandBOM(ANYF_T *AnyfType, size_t Capacity) {
     if (Capacity == 0ULL)
         Capacity = 1ULL;
     if (!AnyfType->sheet) {
-        finfo_tmp = malloc(Capacity * sizeof(INFO_T));
-        if (finfo_tmp) {
+        InfoTemp = malloc(Capacity * sizeof(INFO_T));
+        if (InfoTemp) {
             AnyfType->cells = (int64_t)Capacity;
-            AnyfType->sheet = finfo_tmp;
+            AnyfType->sheet = InfoTemp;
             return true;
         } else
             return false;
@@ -24,11 +24,11 @@ static bool ExpandBOM(ANYF_T *AnyfType, size_t Capacity) {
     if (AnyfType->cells - AnyfType->head.count >= (int64_t)Capacity) {
         return true;
     }
-    exp_size = (Capacity + AnyfType->head.count) * sizeof(INFO_T);
-    finfo_tmp = realloc(AnyfType->sheet, exp_size);
-    if (!finfo_tmp)
+    SizeForRealloc = (Capacity + AnyfType->head.count) * sizeof(INFO_T);
+    InfoTemp = realloc(AnyfType->sheet, SizeForRealloc);
+    if (!InfoTemp)
         return false;
-    AnyfType->sheet = finfo_tmp;
+    AnyfType->sheet = InfoTemp;
     AnyfType->cells = (int64_t)Capacity + AnyfType->head.count;
     return true;
 }
@@ -234,7 +234,7 @@ ANYF_T *AnyfMake(const char *AnyfPath, bool Overwrite) {
 }
 
 // 打开已存在的 ANYF 文件
-ANYF_T *AnyfOpen(const char *fp_path) {
+ANYF_T *AnyfOpen(const char *AnyfPath) {
     ANYF_T *AnyfType;               // ANYF 文件信息结构体
     HEAD_T HeadTemp;                // 临时 ANYF 文件头
     INFO_T *SubFileSheet;           // 子文件信息表
@@ -242,8 +242,8 @@ ANYF_T *AnyfOpen(const char *fp_path) {
     char PathBuffer[PATH_MAX_SIZE]; // 绝对路径及父目录缓冲
     char *AnyfPathCopied;           // 拷贝路径用于结构体
     int64_t CellsCount = 0LL;       // 子文件信息表容量
-    if (OsPathAbsolutePath(PathBuffer, PATH_MAX_SIZE, fp_path)) {
-        printf(MESSAGE_ERROR "无法获取 ANYF 文件绝对路径：%s\n", fp_path);
+    if (OsPathAbsolutePath(PathBuffer, PATH_MAX_SIZE, AnyfPath)) {
+        printf(MESSAGE_ERROR "无法获取 ANYF 文件绝对路径：%s\n", AnyfPath);
         exit(EXIT_CODE_FAILURE);
     }
     printf(MESSAGE_INFO "打开文件：%s\n", PathBuffer);
@@ -327,7 +327,7 @@ ANYF_T *AnyfOpen(const char *fp_path) {
 
 // 将目标打包进已创建的空 ANYF 文件
 ANYF_T *AnyfPack(const char *ToBePacked, bool Recursion, ANYF_T *AnyfType, bool Append) {
-    // 如果packto是目录，则此变量用于存放其父目录
+    // 如果 ToBePacked 是目录，则此变量用于存放其父目录
     char *ParentDIR;
     // 存放绝对路径用于比较是否同一文件
     static char AbsPathBuffer1[PATH_MAX_SIZE]; // ANYF 文件
