@@ -239,10 +239,10 @@ int ParseCommands(int argc, char **argvs) {
 }
 
 int main(int argc, char *argvs[]) {
-// DEBUG 宏 PACK_DEBUG 定义位置：
+// DEBUG 宏 ANYF_DEBUG 定义位置：
 //      CMAKE 工程：定义在'./CMakeLists.txt'中
 //      VS 工程：定义在'属性管理器->msbuild->Debug'中
-#ifdef PACK_DEBUG
+#ifdef ANYF_DEBUG
     printf(MESSAGE_WARN "调试：请更改'entry->main.c->main'函数的调试参数\n");
     argc = 6;
     char *cust[256];
